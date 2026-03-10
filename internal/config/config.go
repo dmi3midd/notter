@@ -10,6 +10,7 @@ import (
 type Config struct {
 	DB         DBConfig         `yaml:"dbConfig"`
 	HttpServer HttpServerConfig `yaml:"httpServer"`
+	JWT        JWTConfig        `yaml:"jwt"`
 }
 
 func LoadConfig() *Config {

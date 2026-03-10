@@ -3,12 +3,11 @@ package main
 import (
 	"log"
 	"log/slog"
-	"net/http"
+	"os"
 
+	"github.com/dmi3midd/notter/internal/api"
 	"github.com/dmi3midd/notter/internal/config"
 	"github.com/dmi3midd/notter/internal/db"
-
-	"os"
 
 	"github.com/joho/godotenv"
 )
@@ -20,8 +19,8 @@ func main() {
 	}
 	cfg := config.LoadConfig()
 
-	// logs := setupLoger("txt")
-	// logs.Info("logger is active")
+	logger := setupLoger("txt")
+	logger.Info("logger is active")
 
 	db, err := db.NewDB(
 		cfg.GetDsn(),
@@ -35,21 +34,9 @@ func main() {
 	defer db.Close()
 	log.Println("database connection established")
 
-	mux := http.NewServeMux()
-	log.Fatal(start(mux, cfg))
+	server := api.NewServer(cfg, db, logger)
+	log.Fatal(server.Start())
 
-}
-
-func start(mux *http.ServeMux, cfg *config.Config) error {
-	srv := http.Server{
-		Addr:         cfg.HttpServer.Address,
-		Handler:      mux,
-		WriteTimeout: cfg.HttpServer.WriteTimeout,
-		ReadTimeout:  cfg.HttpServer.ReadTimeout,
-		IdleTimeout:  cfg.HttpServer.IdleTimeout,
-	}
-	log.Printf("server is running on %s", os.Getenv("ADDR"))
-	return srv.ListenAndServe()
 }
 
 func setupLoger(lf string) *slog.Logger {
