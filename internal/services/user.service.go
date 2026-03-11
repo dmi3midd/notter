@@ -1,7 +1,9 @@
 package services
 
 import (
+	"database/sql"
 	"errors"
+	"log"
 
 	"github.com/dmi3midd/notter/internal/domain"
 	"github.com/google/uuid"
@@ -22,7 +24,7 @@ func NewUserService(store domain.UserRepository, tokenService *TokenService) *Us
 
 func (us *UserService) Registration(username, email, password string) (*domain.UserData, error) {
 	candidate, err1 := us.store.GetByEmail(email)
-	if err1 != nil {
+	if err1 != nil && err1 != sql.ErrNoRows {
 		return nil, err1
 	}
 
@@ -91,4 +93,36 @@ func (us *UserService) Logout(refreshToken string) error {
 		return err
 	}
 	return nil
+}
+
+func (us *UserService) Refresh(refreshToken string) (*domain.UserData, error) {
+	userFromToken := us.tokenService.ValidateRefreshToken(refreshToken)
+	foundToken, err1 := us.tokenService.FindToken(refreshToken)
+	if err1 != nil {
+		return nil, err1
+	}
+	if userFromToken == nil || foundToken == nil {
+		log.Printf("Token validation failed: userFromToken=%v, foundToken=%v\n", userFromToken, foundToken)
+		return nil, errors.New("Unauthorized")
+	}
+
+	user, err2 := us.store.GetByEmail(userFromToken.Email)
+	if err2 != nil {
+		return nil, err2
+	}
+	if user == nil {
+		return nil, errors.New("user not found")
+	}
+	userDto := domain.NewUserDto(user)
+	tokens, err3 := us.tokenService.GenerateTokens(*userDto)
+	if err3 != nil {
+		return nil, err3
+	}
+	us.tokenService.SaveToken(userDto.Id, tokens.RefreshToken)
+	return &domain.UserData{
+		User:         *userDto,
+		RefreshToken: tokens.RefreshToken,
+		AccessToken:  tokens.AccessToken,
+	}, nil
+
 }

@@ -112,7 +112,13 @@ func (ts *TokenService) ValidateRefreshToken(refreshToken string) *domain.UserDt
 		return refreshSecret, nil
 	})
 
-	if err != nil || !token.Valid {
+	if err != nil {
+		fmt.Printf("Refresh token validation error: %v\n", err)
+		return nil
+	}
+
+	if !token.Valid {
+		fmt.Println("Refresh token is invalid")
 		return nil
 	}
 

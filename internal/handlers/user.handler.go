@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/dmi3midd/notter/internal/services"
@@ -60,6 +61,7 @@ func (h *UserHandler) RegisterUserHandler() http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(userData); err != nil {
 			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			return
 		}
 	}
 }
@@ -96,6 +98,7 @@ func (h *UserHandler) LoginUserHandler() http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(userData); err != nil {
 			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			return
 		}
 	}
 }
@@ -105,9 +108,12 @@ func (h *UserHandler) LogoutUserHandler() http.HandlerFunc {
 		cookie, err := r.Cookie("refreshToken")
 		if err != nil {
 			http.Error(w, "Failed to logout", http.StatusInternalServerError)
+			return
 		}
 		refreshToken := cookie.Value
 		if err := h.userService.Logout(refreshToken); err != nil {
+			http.Error(w, "Failed to logout", http.StatusInternalServerError)
+			return
 		}
 
 		http.SetCookie(w, &http.Cookie{
@@ -126,5 +132,34 @@ func (h *UserHandler) LogoutUserHandler() http.HandlerFunc {
 
 func (h *UserHandler) RefreshTokenHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("refreshToken")
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Failed to logout in cookie", http.StatusInternalServerError)
+			return
+		}
+		refreshToken := cookie.Value
+		userData, err1 := h.userService.Refresh(refreshToken)
+		if err1 != nil {
+			log.Println(err1)
+			http.Error(w, "Failed to refresh in service", http.StatusInternalServerError)
+			return
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refreshToken",
+			Value:    userData.RefreshToken,
+			MaxAge:   30 * 24 * 60 * 60,
+			HttpOnly: true,
+			Path:     "/",
+			// Secure: true,
+		})
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(userData); err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			return
+		}
 	}
 }
