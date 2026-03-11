@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/dmi3midd/notter/internal/config"
@@ -76,6 +77,64 @@ func (ts *TokenService) SaveToken(userId, refreshToken string) (*domain.Token, e
 	token, err3 := ts.store.Update(userId, refreshToken)
 	if err3 != nil {
 		return nil, err3
+	}
+	return token, nil
+}
+
+func (ts *TokenService) ValidateAccessToken(accessToken string) *domain.UserDto {
+	accessSecret := []byte(ts.cfg.JWT_ACCESS_SECRET)
+
+	token, err := jwt.ParseWithClaims(accessToken, &UserClaims{}, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return accessSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		return nil
+	}
+
+	if claims, ok := token.Claims.(*UserClaims); ok {
+		return &claims.UserDto
+	}
+
+	return nil
+}
+
+func (ts *TokenService) ValidateRefreshToken(refreshToken string) *domain.UserDto {
+	refreshSecret := []byte(ts.cfg.JWT_REFRESH_SECRET)
+
+	token, err := jwt.ParseWithClaims(refreshToken, &UserClaims{}, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return refreshSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		return nil
+	}
+
+	if claims, ok := token.Claims.(*UserClaims); ok {
+		return &claims.UserDto
+	}
+
+	return nil
+}
+
+func (ts *TokenService) RemoveToken(refreshToken string) (*domain.Token, error) {
+	token, err := ts.store.Delete(refreshToken)
+	if err != nil {
+		return nil, err
+	}
+	return token, nil
+}
+
+func (ts *TokenService) FindToken(refreshToken string) (*domain.Token, error) {
+	token, err := ts.store.GetToken(refreshToken)
+	if err != nil {
+		return nil, err
 	}
 	return token, nil
 }
