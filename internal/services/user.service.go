@@ -1,7 +1,6 @@
 package services
 
 import (
-	"database/sql"
 	"errors"
 
 	"github.com/dmi3midd/notter/internal/domain"
@@ -23,7 +22,7 @@ func NewUserService(store domain.UserRepository, tokenService *TokenService) *Us
 
 func (us *UserService) Registration(username, email, password string) (*domain.UserData, error) {
 	candidate, err1 := us.store.GetByEmail(email)
-	if err1 != nil && err1 != sql.ErrNoRows {
+	if err1 != nil {
 		return nil, err1
 	}
 
@@ -45,9 +44,8 @@ func (us *UserService) Registration(username, email, password string) (*domain.U
 	if err4 != nil {
 		return nil, err4
 	}
-	_, err5 := us.tokenService.SaveToken(userDto.Id, tokens.RefreshToken)
-	if err5 != nil {
-		return nil, err5
+	if _, err := us.tokenService.SaveToken(userDto.Id, tokens.RefreshToken); err != nil {
+		return nil, err
 	}
 
 	return &domain.UserData{
@@ -55,4 +53,42 @@ func (us *UserService) Registration(username, email, password string) (*domain.U
 		RefreshToken: tokens.RefreshToken,
 		AccessToken:  tokens.AccessToken,
 	}, nil
+}
+
+func (us *UserService) Login(email, password string) (*domain.UserData, error) {
+	user, err1 := us.store.GetByEmail(email)
+	if err1 != nil {
+		return nil, err1
+	}
+
+	if user == nil {
+		return nil, errors.New("user not found")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(password)); err != nil {
+		return nil, errors.New("invalid password")
+	}
+
+	userDto := domain.NewUserDto(user)
+	tokens, err := us.tokenService.GenerateTokens(*userDto)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := us.tokenService.SaveToken(userDto.Id, tokens.RefreshToken); err != nil {
+		return nil, err
+	}
+
+	return &domain.UserData{
+		User:         *userDto,
+		RefreshToken: tokens.RefreshToken,
+		AccessToken:  tokens.AccessToken,
+	}, nil
+}
+
+func (us *UserService) Logout(refreshToken string) error {
+	_, err := us.tokenService.RemoveToken(refreshToken)
+	if err != nil {
+		return err
+	}
+	return nil
 }
