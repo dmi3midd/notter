@@ -1,9 +1,9 @@
 package services
 
 import (
-	"database/sql"
+	"context"
 	"errors"
-	"log"
+	"fmt"
 
 	"github.com/dmi3midd/notter/internal/domain"
 	"github.com/google/uuid"
@@ -22,32 +22,33 @@ func NewUserService(store domain.UserRepository, tokenService *TokenService) *Us
 	}
 }
 
-func (us *UserService) Registration(username, email, password string) (*domain.UserData, error) {
-	candidate, err1 := us.store.GetByEmail(email)
-	if err1 != nil && err1 != sql.ErrNoRows {
-		return nil, err1
+func (us *UserService) Registration(ctx context.Context, username, email, password string) (*domain.UserData, error) {
+	op := "user.service-Registration"
+	candidate, err := us.store.GetByEmail(ctx, email)
+	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	if candidate != nil {
-		return nil, errors.New("User with this email already exists")
+		return nil, fmt.Errorf("%s: %w", op, domain.ErrUserAlreadyExist)
 	}
 
 	id := uuid.NewString()
-	hashedPassword, err2 := bcrypt.GenerateFromPassword([]byte(password), 4)
-	if err2 != nil {
-		return nil, err2
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 4)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-	user, err3 := us.store.Create(id, username, email, string(hashedPassword))
-	if err3 != nil {
-		return nil, err3
+	user, err := us.store.Create(ctx, id, username, email, string(hashedPassword))
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	userDto := domain.NewUserDto(user)
-	tokens, err4 := us.tokenService.GenerateTokens(*userDto)
-	if err4 != nil {
-		return nil, err4
+	tokens, err := us.tokenService.GenerateTokens(*userDto)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-	if err := us.tokenService.SaveToken(userDto.Id, tokens.RefreshToken); err != nil {
-		return nil, err
+	if err := us.tokenService.SaveToken(ctx, userDto.Id, tokens.RefreshToken); err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return &domain.UserData{
@@ -57,27 +58,24 @@ func (us *UserService) Registration(username, email, password string) (*domain.U
 	}, nil
 }
 
-func (us *UserService) Login(email, password string) (*domain.UserData, error) {
-	user, err1 := us.store.GetByEmail(email)
-	if err1 != nil {
-		return nil, err1
-	}
-
-	if user == nil {
-		return nil, errors.New("user not found")
+func (us *UserService) Login(ctx context.Context, email, password string) (*domain.UserData, error) {
+	op := "user.service-Login"
+	user, err := us.store.GetByEmail(ctx, email)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(password)); err != nil {
-		return nil, errors.New("invalid password")
+		return nil, fmt.Errorf("%s: %w", op, domain.ErrInvalidPw)
 	}
 
 	userDto := domain.NewUserDto(user)
 	tokens, err := us.tokenService.GenerateTokens(*userDto)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-	if err := us.tokenService.SaveToken(userDto.Id, tokens.RefreshToken); err != nil {
-		return nil, err
+	if err := us.tokenService.SaveToken(ctx, userDto.Id, tokens.RefreshToken); err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return &domain.UserData{
@@ -87,39 +85,44 @@ func (us *UserService) Login(email, password string) (*domain.UserData, error) {
 	}, nil
 }
 
-func (us *UserService) Logout(refreshToken string) error {
-	err := us.tokenService.RemoveToken(refreshToken)
+func (us *UserService) Logout(ctx context.Context, refreshToken string) error {
+	op := "user,service-Logout"
+	err := us.tokenService.RemoveToken(ctx, refreshToken)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
 }
 
-func (us *UserService) Refresh(refreshToken string) (*domain.UserData, error) {
+func (us *UserService) Refresh(ctx context.Context, refreshToken string) (*domain.UserData, error) {
+	op := "user.service-Refresh"
 	userFromToken := us.tokenService.ValidateRefreshToken(refreshToken)
-	foundToekn, err1 := us.tokenService.FindToken(refreshToken)
-	if err1 != nil {
-		return nil, err1
+	_, err := us.tokenService.FindToken(ctx, refreshToken)
+	if err != nil {
+		if errors.Is(err, domain.ErrTokenNotFound) {
+			return nil, fmt.Errorf("%s: %w", op, domain.ErrUnuthorized)
+		}
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-	if userFromToken == nil || foundToekn == nil {
-		log.Println(userFromToken)
-		log.Println(foundToekn)
-		return nil, errors.New("Unuthorizaed")
+	if userFromToken == nil {
+		return nil, fmt.Errorf("%s: %w", op, domain.ErrUnuthorized)
 	}
 
-	user, err2 := us.store.GetByEmail(userFromToken.Email)
-	if err2 != nil {
-		return nil, err2
+	user, err := us.store.GetByEmail(ctx, userFromToken.Email)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	if user == nil {
 		return nil, errors.New("user not found")
 	}
 	userDto := domain.NewUserDto(user)
-	tokens, err3 := us.tokenService.GenerateTokens(*userDto)
-	if err3 != nil {
-		return nil, err3
+	tokens, err := us.tokenService.GenerateTokens(*userDto)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-	us.tokenService.SaveToken(userDto.Id, tokens.RefreshToken)
+	if err = us.tokenService.SaveToken(ctx, userDto.Id, tokens.RefreshToken); err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
 	return &domain.UserData{
 		User:         *userDto,
 		RefreshToken: tokens.RefreshToken,

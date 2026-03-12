@@ -1,8 +1,15 @@
 package domain
 
 import (
+	"context"
+	"errors"
 	"time"
 )
+
+var ErrUserNotFound error = errors.New("user not found")
+var ErrUserAlreadyExist error = errors.New("user already exist")
+var ErrUnuthorized error = errors.New("user unauthorized")
+var ErrInvalidPw error = errors.New("invalid password")
 
 type User struct {
 	Id             string    `json:"id" db:"id"`
@@ -34,7 +41,7 @@ func NewUserDto(user *User) *UserDto {
 }
 
 type UserRepository interface {
-	GetById(id string) (*User, error)
-	GetByEmail(email string) (*User, error)
-	Create(id, username, email, hashedPassword string) (*User, error)
+	GetById(ctx context.Context, id string) (*User, error)
+	GetByEmail(ctx context.Context, email string) (*User, error)
+	Create(ctx context.Context, id, username, email, hashedPassword string) (*User, error)
 }

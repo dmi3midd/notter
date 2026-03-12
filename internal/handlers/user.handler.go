@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
+	"github.com/dmi3midd/notter/internal/domain"
 	"github.com/dmi3midd/notter/internal/services"
 )
 
@@ -37,14 +39,17 @@ func (h *UserHandler) RegisterUserHandler() http.HandlerFunc {
 		}
 		defer r.Body.Close()
 
+		ctx := r.Context()
 		userData, err := h.userService.Registration(
+			ctx,
 			reqBody.Username,
 			reqBody.Email,
 			reqBody.Password,
 		)
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Printf("ERROR: %v", errors.Unwrap(err))
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
@@ -60,7 +65,7 @@ func (h *UserHandler) RegisterUserHandler() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(userData); err != nil {
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 	}
@@ -75,13 +80,20 @@ func (h *UserHandler) LoginUserHandler() http.HandlerFunc {
 		}
 		defer r.Body.Close()
 
+		ctx := r.Context()
 		userData, err := h.userService.Login(
+			ctx,
 			reqBody.Email,
 			reqBody.Password,
 		)
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			if errors.Is(err, domain.ErrUserNotFound) {
+				log.Printf("ERROR: %v", errors.Unwrap(err))
+				http.Error(w, domain.ErrUserNotFound.Error(), http.StatusNotFound)
+				return
+			}
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
@@ -97,7 +109,7 @@ func (h *UserHandler) LoginUserHandler() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(userData); err != nil {
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 	}
@@ -107,12 +119,14 @@ func (h *UserHandler) LogoutUserHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("refreshToken")
 		if err != nil {
-			http.Error(w, "Failed to logout", http.StatusInternalServerError)
+			http.Error(w, domain.ErrUnuthorized.Error(), http.StatusUnauthorized)
 			return
 		}
 		refreshToken := cookie.Value
-		if err := h.userService.Logout(refreshToken); err != nil {
-			http.Error(w, "Failed to logout", http.StatusInternalServerError)
+		ctx := r.Context()
+		if err := h.userService.Logout(ctx, refreshToken); err != nil {
+			log.Printf("ERROR: %v", errors.Unwrap(err))
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
@@ -134,15 +148,19 @@ func (h *UserHandler) RefreshTokenHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("refreshToken")
 		if err != nil {
-			log.Println(err)
-			http.Error(w, "Failed to logout in cookie", http.StatusInternalServerError)
+			http.Error(w, domain.ErrUnuthorized.Error(), http.StatusUnauthorized)
 			return
 		}
 		refreshToken := cookie.Value
-		userData, err1 := h.userService.Refresh(refreshToken)
-		if err1 != nil {
-			log.Println(err1)
-			http.Error(w, "Failed to refresh in service", http.StatusInternalServerError)
+		ctx := r.Context()
+		userData, err := h.userService.Refresh(ctx, refreshToken)
+		if err != nil {
+			log.Printf("ERROR: %v", errors.Unwrap(err))
+			if errors.Is(err, domain.ErrUnuthorized) {
+				http.Error(w, domain.ErrUnuthorized.Error(), http.StatusUnauthorized)
+				return
+			}
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
@@ -158,7 +176,7 @@ func (h *UserHandler) RefreshTokenHandler() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(userData); err != nil {
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 	}

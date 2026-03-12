@@ -1,13 +1,21 @@
 package domain
 
+import (
+	"context"
+	"errors"
+)
+
+var ErrTokenNotFound error = errors.New("token not found")
+var ErrSignMethod error = errors.New("unexpected signing method")
+
 type Token struct {
 	UserId       string `json:"userId" db:"user_id"`
 	RefreshToken string `json:"refreshToken" db:"refresh_token"`
 }
 
 type TokenRepository interface {
-	GetToken(refreshToken string) (*Token, error)
-	Create(userId, refreshToken string) error
-	Delete(refreshToken string) error
-	Update(userId, refreshToken string) error
+	GetToken(ctx context.Context, refreshToken string) (*Token, error)
+	Create(ctx context.Context, userId, refreshToken string) error
+	Delete(ctx context.Context, refreshToken string) error
+	Update(ctx context.Context, userId, refreshToken string) error
 }

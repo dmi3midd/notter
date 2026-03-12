@@ -1,7 +1,8 @@
 package services
 
 import (
-	"database/sql"
+	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -33,6 +34,7 @@ type TokenPair struct {
 }
 
 func (ts *TokenService) GenerateTokens(payload domain.UserDto) (*TokenPair, error) {
+	op := "token.service-GenerateToken"
 	accessSecret := []byte(ts.cfg.JWT_ACCESS_SECRET)
 	refreshSecret := []byte(ts.cfg.JWT_REFRESH_SECRET)
 	accessExpiry := ts.cfg.AccessExpiry
@@ -57,7 +59,7 @@ func (ts *TokenService) GenerateTokens(payload domain.UserDto) (*TokenPair, erro
 	}
 	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(refreshSecret)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return &TokenPair{
@@ -66,26 +68,27 @@ func (ts *TokenService) GenerateTokens(payload domain.UserDto) (*TokenPair, erro
 	}, nil
 }
 
-func (ts *TokenService) SaveToken(userId, refreshToken string) error {
-	_, err := ts.store.GetToken(refreshToken)
-	if err == sql.ErrNoRows {
-		if err := ts.store.Create(userId, refreshToken); err != nil {
-			return err
+func (ts *TokenService) SaveToken(ctx context.Context, userId, refreshToken string) error {
+	op := "token.service-SaveToken"
+	if err := ts.store.Update(ctx, userId, refreshToken); err != nil {
+		if errors.Is(err, domain.ErrTokenNotFound) {
+			if err := ts.store.Create(ctx, userId, refreshToken); err != nil {
+				return fmt.Errorf("%s: %w", op, err)
+			}
+			return nil
 		}
-		return nil
-	}
-	if err := ts.store.Update(userId, refreshToken); err != nil {
-		return err
+		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
 }
 
 func (ts *TokenService) ValidateAccessToken(accessToken string) *domain.UserDto {
+	op := "token.service-validateAccessToken"
 	accessSecret := []byte(ts.cfg.JWT_ACCESS_SECRET)
 
 	token, err := jwt.ParseWithClaims(accessToken, &UserClaims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("%s: %w, %v", op, domain.ErrSignMethod, token.Header["alg"])
 		}
 		return accessSecret, nil
 	})
@@ -102,11 +105,12 @@ func (ts *TokenService) ValidateAccessToken(accessToken string) *domain.UserDto 
 }
 
 func (ts *TokenService) ValidateRefreshToken(refreshToken string) *domain.UserDto {
+	op := "token.service-validateRefreshToken"
 	refreshSecret := []byte(ts.cfg.JWT_REFRESH_SECRET)
 
 	token, err := jwt.ParseWithClaims(refreshToken, &UserClaims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("%s: %w, %v", op, domain.ErrSignMethod, token.Header["alg"])
 		}
 		return refreshSecret, nil
 	})
@@ -128,18 +132,20 @@ func (ts *TokenService) ValidateRefreshToken(refreshToken string) *domain.UserDt
 	return nil
 }
 
-func (ts *TokenService) RemoveToken(refreshToken string) error {
-	err := ts.store.Delete(refreshToken)
+func (ts *TokenService) RemoveToken(ctx context.Context, refreshToken string) error {
+	op := "token.service-RemoveToken"
+	err := ts.store.Delete(ctx, refreshToken)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
 }
 
-func (ts *TokenService) FindToken(refreshToken string) (*domain.Token, error) {
-	token, err := ts.store.GetToken(refreshToken)
+func (ts *TokenService) FindToken(ctx context.Context, refreshToken string) (*domain.Token, error) {
+	op := "token.service-FindToken"
+	token, err := ts.store.GetToken(ctx, refreshToken)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	return token, nil
 }
