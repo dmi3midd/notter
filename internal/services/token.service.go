@@ -1,6 +1,7 @@
 package services
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -65,20 +66,18 @@ func (ts *TokenService) GenerateTokens(payload domain.UserDto) (*TokenPair, erro
 	}, nil
 }
 
-func (ts *TokenService) SaveToken(userId, refreshToken string) (*domain.Token, error) {
-	_, err1 := ts.store.GetToken(refreshToken)
-	if err1 != nil {
-		token, err2 := ts.store.Create(userId, refreshToken)
-		if err2 != nil {
-			return nil, err2
+func (ts *TokenService) SaveToken(userId, refreshToken string) error {
+	_, err := ts.store.GetToken(refreshToken)
+	if err == sql.ErrNoRows {
+		if err := ts.store.Create(userId, refreshToken); err != nil {
+			return err
 		}
-		return token, nil
+		return nil
 	}
-	token, err3 := ts.store.Update(userId, refreshToken)
-	if err3 != nil {
-		return nil, err3
+	if err := ts.store.Update(userId, refreshToken); err != nil {
+		return err
 	}
-	return token, nil
+	return nil
 }
 
 func (ts *TokenService) ValidateAccessToken(accessToken string) *domain.UserDto {
@@ -129,12 +128,12 @@ func (ts *TokenService) ValidateRefreshToken(refreshToken string) *domain.UserDt
 	return nil
 }
 
-func (ts *TokenService) RemoveToken(refreshToken string) (*domain.Token, error) {
-	token, err := ts.store.Delete(refreshToken)
+func (ts *TokenService) RemoveToken(refreshToken string) error {
+	err := ts.store.Delete(refreshToken)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return token, nil
+	return nil
 }
 
 func (ts *TokenService) FindToken(refreshToken string) (*domain.Token, error) {

@@ -25,33 +25,33 @@ func (r *TokenRepository) GetToken(refreshToken string) (*domain.Token, error) {
 	return &token, nil
 }
 
-func (r *TokenRepository) Create(userId, refreshToken string) (*domain.Token, error) {
+func (r *TokenRepository) Create(userId, refreshToken string) error {
 	query := `INSERT INTO tokens (user_id, refresh_token)
 			  VALUES ($1, $2) RETURNING *`
 	var token domain.Token
 	err := r.store.Get(&token, query, userId, refreshToken)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &token, nil
+	return nil
 }
 
-func (r *TokenRepository) Delete(refreshToken string) (*domain.Token, error) {
+func (r *TokenRepository) Delete(refreshToken string) error {
 	query := "DELETE FROM tokens WHERE refresh_token = $1 RETURNING *"
 	var token domain.Token
 	err := r.store.Get(&token, query, refreshToken)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &token, nil
+	return nil
 }
 
-func (r *TokenRepository) Update(userId, refreshToken string) (*domain.Token, error) {
+func (r *TokenRepository) Update(userId, refreshToken string) error {
 	query := "UPDATE tokens SET refresh_token = $1 WHERE user_id = $2 RETURNING *"
 	var token domain.Token
 	err := r.store.Get(&token, query, refreshToken, userId)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &token, nil
+	return nil
 }

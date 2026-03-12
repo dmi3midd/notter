@@ -46,7 +46,7 @@ func (us *UserService) Registration(username, email, password string) (*domain.U
 	if err4 != nil {
 		return nil, err4
 	}
-	if _, err := us.tokenService.SaveToken(userDto.Id, tokens.RefreshToken); err != nil {
+	if err := us.tokenService.SaveToken(userDto.Id, tokens.RefreshToken); err != nil {
 		return nil, err
 	}
 
@@ -76,7 +76,7 @@ func (us *UserService) Login(email, password string) (*domain.UserData, error) {
 	if err != nil {
 		return nil, err
 	}
-	if _, err := us.tokenService.SaveToken(userDto.Id, tokens.RefreshToken); err != nil {
+	if err := us.tokenService.SaveToken(userDto.Id, tokens.RefreshToken); err != nil {
 		return nil, err
 	}
 
@@ -88,7 +88,7 @@ func (us *UserService) Login(email, password string) (*domain.UserData, error) {
 }
 
 func (us *UserService) Logout(refreshToken string) error {
-	_, err := us.tokenService.RemoveToken(refreshToken)
+	err := us.tokenService.RemoveToken(refreshToken)
 	if err != nil {
 		return err
 	}
@@ -97,13 +97,14 @@ func (us *UserService) Logout(refreshToken string) error {
 
 func (us *UserService) Refresh(refreshToken string) (*domain.UserData, error) {
 	userFromToken := us.tokenService.ValidateRefreshToken(refreshToken)
-	foundToken, err1 := us.tokenService.FindToken(refreshToken)
+	foundToekn, err1 := us.tokenService.FindToken(refreshToken)
 	if err1 != nil {
 		return nil, err1
 	}
-	if userFromToken == nil || foundToken == nil {
-		log.Printf("Token validation failed: userFromToken=%v, foundToken=%v\n", userFromToken, foundToken)
-		return nil, errors.New("Unauthorized")
+	if userFromToken == nil || foundToekn == nil {
+		log.Println(userFromToken)
+		log.Println(foundToekn)
+		return nil, errors.New("Unuthorizaed")
 	}
 
 	user, err2 := us.store.GetByEmail(userFromToken.Email)

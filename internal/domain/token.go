@@ -7,7 +7,7 @@ type Token struct {
 
 type TokenRepository interface {
 	GetToken(refreshToken string) (*Token, error)
-	Create(userId, refreshToken string) (*Token, error)
-	Delete(refreshToken string) (*Token, error)
-	Update(userId, refreshToken string) (*Token, error)
+	Create(userId, refreshToken string) error
+	Delete(refreshToken string) error
+	Update(userId, refreshToken string) error
 }
