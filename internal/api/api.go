@@ -10,6 +10,7 @@ import (
 	"github.com/dmi3midd/notter/internal/repositories"
 	"github.com/dmi3midd/notter/internal/routers"
 	"github.com/dmi3midd/notter/internal/services"
+	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -40,8 +41,8 @@ func (s *Server) Start() error {
 	return srv.ListenAndServe()
 }
 
-func (s *Server) setupRoutes() *http.ServeMux {
-	mainMux := http.NewServeMux()
+func (s *Server) setupRoutes() *chi.Mux {
+	mainRouter := chi.NewRouter()
 
 	tokenRepo := repositories.NewTokenRepo(s.db)
 	tokenService := services.NewTokenService(s.cfg.JWT, tokenRepo)
@@ -49,7 +50,7 @@ func (s *Server) setupRoutes() *http.ServeMux {
 	userRepo := repositories.NewUserRepo(s.db)
 	userService := services.NewUserService(userRepo, tokenService)
 	userHandler := handlers.NewUserHandler(userService)
-	userMux := routers.NewUserMux(userHandler)
-	mainMux.Handle("/api/users/", http.StripPrefix("/api/users", userMux))
-	return mainMux
+	userRouter := routers.NewUserRouter(userHandler)
+	mainRouter.Mount("/users", userRouter)
+	return mainRouter
 }

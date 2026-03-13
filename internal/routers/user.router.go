@@ -1,18 +1,17 @@
 package routers
 
 import (
-	"net/http"
-
 	"github.com/dmi3midd/notter/internal/handlers"
+	"github.com/go-chi/chi/v5"
 )
 
-func NewUserMux(handler *handlers.UserHandler) *http.ServeMux {
-	mux := http.NewServeMux()
+func NewUserRouter(handler *handlers.UserHandler) *chi.Mux {
+	userRouter := chi.NewRouter()
 
-	mux.HandleFunc("POST /registration", handler.RegisterUserHandler())
-	mux.HandleFunc("POST /login", handler.LoginUserHandler())
-	mux.HandleFunc("POST /logout", handler.LogoutUserHandler())
-	mux.HandleFunc("POST /refresh", handler.RefreshTokenHandler())
+	userRouter.Post("/registration", handler.RegisterUserHandler())
+	userRouter.Post("/login", handler.LoginUserHandler())
+	userRouter.Post("/logout", handler.LogoutUserHandler())
+	userRouter.Post("/refresh", handler.RefreshTokenHandler())
 
-	return mux
+	return userRouter
 }
