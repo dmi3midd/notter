@@ -12,10 +12,10 @@ import (
 
 type UserService struct {
 	store        domain.UserRepository
-	tokenService *TokenService
+	tokenService domain.TokenService
 }
 
-func NewUserService(store domain.UserRepository, tokenService *TokenService) *UserService {
+func NewUserService(store domain.UserRepository, tokenService domain.TokenService) *UserService {
 	return &UserService{
 		store:        store,
 		tokenService: tokenService,

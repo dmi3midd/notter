@@ -45,3 +45,10 @@ type UserRepository interface {
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	Create(ctx context.Context, id, username, email, hashedPassword string) (*User, error)
 }
+
+type UserService interface {
+	Registration(ctx context.Context, username, email, password string) (*UserData, error)
+	Login(ctx context.Context, email, password string) (*UserData, error)
+	Logout(ctx context.Context, refreshToken string) error
+	Refresh(ctx context.Context, refreshToken string) (*UserData, error)
+}

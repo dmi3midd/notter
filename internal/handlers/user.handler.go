@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/dmi3midd/notter/internal/domain"
-	"github.com/dmi3midd/notter/internal/services"
 )
 
 type RegistrationRequest struct {
@@ -21,10 +20,10 @@ type LoginRequest struct {
 }
 
 type UserHandler struct {
-	userService *services.UserService
+	userService domain.UserService
 }
 
-func NewUserHandler(userService *services.UserService) *UserHandler {
+func NewUserHandler(userService domain.UserService) *UserHandler {
 	return &UserHandler{
 		userService: userService,
 	}

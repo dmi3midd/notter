@@ -28,12 +28,7 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 }
 
-type TokenPair struct {
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
-}
-
-func (ts *TokenService) GenerateTokens(payload domain.UserDto) (*TokenPair, error) {
+func (ts *TokenService) GenerateTokens(payload domain.UserDto) (*domain.TokenPair, error) {
 	op := "token.service-GenerateToken"
 	accessSecret := []byte(ts.cfg.JWT_ACCESS_SECRET)
 	refreshSecret := []byte(ts.cfg.JWT_REFRESH_SECRET)
@@ -62,7 +57,7 @@ func (ts *TokenService) GenerateTokens(payload domain.UserDto) (*TokenPair, erro
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return &TokenPair{
+	return &domain.TokenPair{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
