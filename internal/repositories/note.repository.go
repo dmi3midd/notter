@@ -5,11 +5,34 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/dmi3midd/notter/internal/domain"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 )
+
+type noteRow struct {
+	NoteId    string         `db:"note_id"`
+	UserId    string         `db:"user_id"`
+	Title     string         `db:"title"`
+	Content   string         `db:"content"`
+	Tags      pq.StringArray `db:"tags"`
+	CreatedAt time.Time      `db:"created_at"`
+	UpdatedAt time.Time      `db:"updated_at"`
+}
+
+func (r *noteRow) toDomain() domain.Note {
+	return domain.Note{
+		NoteId:    r.NoteId,
+		UserId:    r.UserId,
+		Title:     r.Title,
+		Content:   r.Content,
+		Tags:      []string(r.Tags),
+		CreatedAt: r.CreatedAt,
+		UpdatedAt: r.UpdatedAt,
+	}
+}
 
 type NoteRepository struct {
 	store *sqlx.DB
@@ -27,14 +50,15 @@ func (r *NoteRepository) GetNote(
 ) (*domain.Note, error) {
 	op := "note.repository-GetNote"
 	query := "SELECT * FROM notes WHERE id = $1"
-	var note domain.Note
-	err := r.store.GetContext(ctx, &note, query, noteId)
+	var row noteRow
+	err := r.store.GetContext(ctx, &row, query, noteId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrNoteNotFound
 		}
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
+	note := row.toDomain()
 	return &note, nil
 }
 
@@ -44,11 +68,17 @@ func (r *NoteRepository) GetNotes(
 ) ([]domain.Note, error) {
 	op := "note.repository-GetNotes"
 	query := "SELECT * FROM notes WHERE user_id = $1"
-	var notes []domain.Note
-	err := r.store.SelectContext(ctx, &notes, query, userId, "")
+	var rows []noteRow
+	err := r.store.SelectContext(ctx, &rows, query, userId)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
+	
+	notes := make([]domain.Note, len(rows))
+	for i, row := range rows {
+		notes[i] = row.toDomain()
+	}
+	
 	return notes, nil
 }
 
@@ -56,7 +86,6 @@ func (r *NoteRepository) CreateNote(
 	ctx context.Context,
 	noteId string,
 	userId string,
-	boardId string,
 	title string,
 	content string,
 	tags []string,

@@ -7,6 +7,7 @@ import (
 
 	"github.com/dmi3midd/notter/internal/config"
 	"github.com/dmi3midd/notter/internal/handlers"
+	"github.com/dmi3midd/notter/internal/middlewares"
 	"github.com/dmi3midd/notter/internal/repositories"
 	"github.com/dmi3midd/notter/internal/routers"
 	"github.com/dmi3midd/notter/internal/services"
@@ -51,6 +52,20 @@ func (s *Server) setupRoutes() *chi.Mux {
 	userService := services.NewUserService(userRepo, tokenService)
 	userHandler := handlers.NewUserHandler(userService)
 	userRouter := routers.NewUserRouter(userHandler)
-	mainRouter.Mount("/users", userRouter)
+
+	noteRepo := repositories.NewNoteRepo(s.db)
+	noteService := services.NewNoteService(noteRepo)
+	noteHandler := handlers.NewNoteHandler(noteService)
+	noteRouter := routers.NewNoteRouter(noteHandler)
+
+	mainRouter.Mount("/api/users", userRouter)
+
+	mainRouter.Group(func(r chi.Router) {
+		r.Use(middlewares.Authorization(tokenService, userRepo))
+
+		r.Mount("/api/notes", noteRouter)
+	})
+
+	// mainRouter.Mount("/api/notes", noteRouter)
 	return mainRouter
 }
