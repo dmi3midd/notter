@@ -10,6 +10,8 @@ func NewNoteRouter(handler *handlers.NoteHandler) *chi.Mux {
 
 	noteRouter.Get("/notes", handler.GetNotes())
 	noteRouter.Post("/note", handler.CreateNote())
+	noteRouter.Put("/note", handler.UpdateNote())
+	noteRouter.Delete("/note", handler.DeleteNote())
 
 	return noteRouter
 }

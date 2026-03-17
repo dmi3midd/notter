@@ -59,13 +59,11 @@ func (s *Server) setupRoutes() *chi.Mux {
 	noteRouter := routers.NewNoteRouter(noteHandler)
 
 	mainRouter.Mount("/api/users", userRouter)
-
 	mainRouter.Group(func(r chi.Router) {
 		r.Use(middlewares.Authorization(tokenService, userRepo))
 
 		r.Mount("/api/notes", noteRouter)
 	})
 
-	// mainRouter.Mount("/api/notes", noteRouter)
 	return mainRouter
 }
