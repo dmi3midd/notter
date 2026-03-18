@@ -29,8 +29,7 @@ func (r *NoteRepository) GetNote(
 	op := "note.repository-GetNote"
 	query := "SELECT * FROM notes WHERE id = $1"
 	var note domain.Note
-	err := r.db.GetContext(ctx, &note, query, noteId)
-	if err != nil {
+	if err := r.db.GetContext(ctx, &note, query, noteId); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrNoteNotFound
 		}
@@ -46,8 +45,7 @@ func (r *NoteRepository) GetNotesByUserId(
 	op := "note.repository-GetNotesByUserId"
 	query := "SELECT * FROM notes WHERE user_id = $1"
 	var notes []domain.Note
-	err := r.db.SelectContext(ctx, &notes, query, userId)
-	if err != nil {
+	if err := r.db.SelectContext(ctx, &notes, query, userId); err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -61,8 +59,7 @@ func (r *NoteRepository) GetNotesByBoardId(
 	op := "note.repository-GetNotesByBoardId"
 	query := "SELECT * FROM notes WHERE board_id = $1"
 	var notes []domain.Note
-	err := r.db.SelectContext(ctx, &notes, query, boardId)
-	if err != nil {
+	if err := r.db.SelectContext(ctx, &notes, query, boardId); err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	return notes, nil
@@ -75,8 +72,7 @@ func (r *NoteRepository) GetStandaloneNotes(
 	op := "note.repository-GetStandaloneNotes"
 	query := "SELECT * FROM notes WHERE user_id = $1 AND board_id IS NULL"
 	var notes []domain.Note
-	err := r.db.SelectContext(ctx, &notes, query, userId)
-	if err != nil {
+	if err := r.db.SelectContext(ctx, &notes, query, userId); err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -123,8 +119,7 @@ func (r *NoteRepository) DeleteNote(
 ) error {
 	op := "note.repository-DeleteNote"
 	query := "DELETE FROM notes WHERE note_id = $1"
-	_, err := r.db.ExecContext(ctx, query, noteId)
-	if err != nil {
+	if _, err := r.db.ExecContext(ctx, query, noteId); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
