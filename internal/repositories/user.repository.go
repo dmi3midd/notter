@@ -10,12 +10,12 @@ import (
 )
 
 type UserRepository struct {
-	store *sqlx.DB
+	db *sqlx.DB
 }
 
-func NewUserRepo(store *sqlx.DB) *UserRepository {
+func NewUserRepo(db *sqlx.DB) *UserRepository {
 	return &UserRepository{
-		store: store,
+		db: db,
 	}
 }
 
@@ -23,7 +23,7 @@ func (r *UserRepository) GetById(ctx context.Context, id string) (*domain.User, 
 	op := "user.repository-GetById"
 	query := "SELECT * FROM users WHERE id = $1"
 	var user domain.User
-	err := r.store.GetContext(ctx, &user, query, id)
+	err := r.db.GetContext(ctx, &user, query, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, domain.ErrUserNotFound
@@ -37,7 +37,7 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*domain.
 	op := "user.repository-GetByEmail"
 	query := "SELECT * FROM users WHERE email = $1"
 	var user domain.User
-	err := r.store.GetContext(ctx, &user, query, email)
+	err := r.db.GetContext(ctx, &user, query, email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, domain.ErrUserNotFound
@@ -52,7 +52,7 @@ func (r *UserRepository) Create(ctx context.Context, id, username, email, hashed
 	query := `INSERT INTO users (id, username, email, hashed_password) 
 			  VALUES ($1, $2, $3, $4) RETURNING *`
 	var user domain.User
-	err := r.store.GetContext(ctx, &user, query, id, username, email, hashedPassword)
+	err := r.db.GetContext(ctx, &user, query, id, username, email, hashedPassword)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}

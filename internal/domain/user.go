@@ -15,15 +15,15 @@ type User struct {
 	Id             string    `json:"id" db:"id"`
 	Username       string    `json:"username" db:"username"`
 	Email          string    `json:"email" db:"email"`
-	HashedPassword string    `json:"hashed_password" db:"hashed_password"`
-	CreatedAt      time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
+	HashedPassword string    `json:"hashedPassword" db:"hashed_password"`
+	CreatedAt      time.Time `json:"createdAt" db:"created_at"`
+	UpdatedAt      time.Time `json:"updatedAt" db:"updated_at"`
 }
 
 type UserData struct {
 	User         UserDto `json:"user"`
-	RefreshToken string  `json:"refresh_token"`
-	AccessToken  string  `json:"access_token"`
+	RefreshToken string  `json:"refreshToken"`
+	AccessToken  string  `json:"accessToken"`
 }
 
 type UserDto struct {
