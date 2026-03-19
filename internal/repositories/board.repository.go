@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -19,6 +20,7 @@ func NewBoardRepo(db *sqlx.DB) *BoardRepository {
 	}
 }
 
+// Can return domain.ErrBoardNotFound
 func (r *BoardRepository) GetBoard(
 	ctx context.Context,
 	boardId string,
@@ -27,7 +29,7 @@ func (r *BoardRepository) GetBoard(
 	query := "SELEct * FROM boards WHERE board_id = $1"
 	var board domain.Board
 	if err := r.db.GetContext(ctx, &board, query, boardId); err != nil {
-		if errors.Is(err, domain.ErrBoardNotFound) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrBoardNotFound
 		}
 		return nil, fmt.Errorf("%s: %w", op, err)

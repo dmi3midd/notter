@@ -20,8 +20,7 @@ func NewNoteRepo(db *sqlx.DB) *NoteRepository {
 	}
 }
 
-// Need to refactor to unify methods:
-// GetNotesByUserId, GetNotesByBoardId, GetStandaloneNotes
+// Can return domain.ErrNoteNotFound
 func (r *NoteRepository) GetNote(
 	ctx context.Context,
 	noteId string,
@@ -36,20 +35,6 @@ func (r *NoteRepository) GetNote(
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	return &note, nil
-}
-
-func (r *NoteRepository) GetNotesByUserId(
-	ctx context.Context,
-	userId string,
-) ([]domain.Note, error) {
-	op := "note.repository-GetNotesByUserId"
-	query := "SELECT * FROM notes WHERE user_id = $1"
-	var notes []domain.Note
-	if err := r.db.SelectContext(ctx, &notes, query, userId); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	return notes, nil
 }
 
 func (r *NoteRepository) GetNotesByBoardId(
@@ -92,6 +77,7 @@ func (r *NoteRepository) CreateNote(
 	return nil
 }
 
+// Can return domain.ErrNoteNotFound
 func (r *NoteRepository) UpdateNote(
 	ctx context.Context,
 	note *domain.Note,

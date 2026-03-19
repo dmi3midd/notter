@@ -38,18 +38,12 @@ func NewNoteDto(note *Note) *NoteDto {
 	}
 }
 
-// Need to refactor to unify methods:
-// GetNotesByUserId, GetNotesByBoardId, GetStandaloneNotes
 type NoteRepository interface {
+	// If necessary, return ErrNoteNotFound
 	GetNote(
 		ctx context.Context,
 		noteId string,
 	) (*Note, error)
-
-	GetNotesByUserId(
-		ctx context.Context,
-		userId string,
-	) ([]Note, error)
 
 	GetNotesByBoardId(
 		ctx context.Context,
@@ -66,9 +60,46 @@ type NoteRepository interface {
 		note *Note,
 	) error
 
+	// If necessary, return ErrNoteNotFound
 	UpdateNote(
 		ctx context.Context,
 		note *Note,
+	) error
+
+	DeleteNote(
+		ctx context.Context,
+		noteId string,
+	) error
+}
+
+type NoteService interface {
+	GetNote(
+		ctx context.Context,
+		noteId string,
+	) (*NoteDto, error)
+
+	GetNotesByBoardId(
+		ctx context.Context,
+		boardId string,
+	) ([]NoteDto, error)
+
+	GetStandaloneNotes(
+		ctx context.Context,
+		userId string,
+	) ([]NoteDto, error)
+
+	CreateNote(
+		ctx context.Context,
+		boardId string,
+		userId string,
+		title string,
+		content string,
+	) error
+
+	UpdateNote(
+		ctx context.Context,
+		userId string,
+		note NoteDto,
 	) error
 
 	DeleteNote(

@@ -36,6 +36,7 @@ func NewBoardDto(board *Board) *BoardDto {
 }
 
 type BoardRepository interface {
+	// If necessary, return ErrBoardNotFound
 	GetBoard(
 		ctx context.Context,
 		boardId string,
@@ -51,6 +52,7 @@ type BoardRepository interface {
 		board *Board,
 	) error
 
+	// If necessary, return ErrBoardNotFound
 	UpdateBoard(
 		ctx context.Context,
 		board *Board,
