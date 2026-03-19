@@ -55,9 +55,8 @@ func (r *BoardRepository) CreateBoard(
 	board *domain.Board,
 ) error {
 	op := "board.repository-CreateBoard"
-	query := `INSERT INTO boards 
-			         (id, user_id, title, notes, created_at, updated_at)
-			  VALUES (:id, :user_id, :title, :notes, :created_at, :updated_at)
+	query := `INSERT INTO boards (id, user_id, title, notes, created_at, updated_at) 
+	VALUES (:id, :user_id, :title, :notes, :created_at, :updated_at)
 	`
 	if _, err := r.db.NamedExecContext(ctx, query, board); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
@@ -70,10 +69,7 @@ func (r *BoardRepository) UpdateBoard(
 	board *domain.Board,
 ) error {
 	op := "board.repository-UpdateBoard"
-	query := `UPDATE boards SET
-			  	title = :title, notes = :notes, updated_at = :updated_at
-			  WHERE id = :id
-	`
+	query := `UPDATE boards SET title = :title, updated_at = :updated_at WHERE id = :id`
 	if _, err := r.db.NamedExecContext(ctx, query, board); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -85,8 +81,24 @@ func (r *BoardRepository) DeleteBoard(
 	boardId string,
 ) error {
 	op := "board.repository-DeleteBoard"
-	query := "DELETE FROM boards WHERE id = $1"
-	if _, err := r.db.ExecContext(ctx, query, boardId); err != nil {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	defer tx.Rollback()
+
+	queryToDeleteBoard := "DELETE FROM boards WHERE id = $1"
+	if _, err := r.db.ExecContext(ctx, queryToDeleteBoard, boardId); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	queryToDelteNotes := "DELETE FROM notes WHERE board_id = $1"
+	if _, err := r.db.ExecContext(ctx, queryToDelteNotes, boardId); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil

@@ -69,9 +69,27 @@ func (r *NoteRepository) CreateNote(
 	note *domain.Note,
 ) error {
 	op := "note.repository-CreateNote"
-	query := `INSERT INTO notes (id, board_id, user_id, title, content, created_at, update_at)
-              VALUES (:id, :board_id, :user_id, :title, :content, :created_at, :update_at)`
-	if _, err := r.db.NamedExecContext(ctx, query, note); err != nil {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	defer tx.Rollback()
+
+	queryToCreateNote := `
+	INSERT INTO notes (id, board_id, user_id, title, content, created_at, update_at)
+    VALUES (:id, :board_id, :user_id, :title, :content, :created_at, :update_at)
+	`
+	if _, err := r.db.NamedExecContext(ctx, queryToCreateNote, note); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	queryToUpdateBoard := `UPDATE boards SET notes = notes + 1 WHERE id = $1`
+	if _, err := r.db.ExecContext(ctx, queryToUpdateBoard, note.BoardId); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
