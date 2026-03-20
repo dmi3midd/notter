@@ -63,3 +63,27 @@ type BoardRepository interface {
 		boardId string,
 	) error
 }
+
+type BoardService interface {
+	GetBoards(
+		ctx context.Context,
+		userId string,
+	) ([]BoardDto, error)
+
+	CreateBoard(
+		ctx context.Context,
+		userId string,
+		title string,
+	) error
+
+	UpdateBoard(
+		ctx context.Context,
+		boardId string,
+		title string,
+	) error
+
+	DeleteBoard(
+		ctx context.Context,
+		boardId string,
+	)
+}
