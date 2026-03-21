@@ -85,5 +85,5 @@ type BoardService interface {
 	DeleteBoard(
 		ctx context.Context,
 		boardId string,
-	)
+	) error
 }

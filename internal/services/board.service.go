@@ -47,6 +47,7 @@ func (s *BoardService) GetBoards(ctx context.Context, userId string) ([]domain.B
 }
 
 // Method to create board
+// Can return domain.ErrUserNotFound
 func (s *BoardService) CreateBoard(
 	ctx context.Context,
 	userId string,
@@ -75,7 +76,7 @@ func (s *BoardService) CreateBoard(
 
 // Method to update board
 // Can return domain.ErrBoardNotFound
-func (s *BoardService) UpdateNote(
+func (s *BoardService) UpdateBoard(
 	ctx context.Context,
 	boardId string,
 	title string,
