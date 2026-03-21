@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/dmi3midd/notter/internal/domain"
 	"github.com/jmoiron/sqlx"
@@ -96,25 +97,28 @@ func (r *NoteRepository) CreateNote(
 }
 
 // Can return domain.ErrNoteNotFound
-// func (r *NoteRepository) UpdateNote(
-// 	ctx context.Context,
-// 	note *domain.Note,
-// ) error {
-// 	op := "note.repository-UpdateNote"
-// 	query := `UPDATE notes SET
-// 							title = :title,
-// 							content = :content,
-// 							updated_at = :updated_at
-// 						WHERE id = :id
-// 	`
-// 	if _, err := r.db.NamedExecContext(ctx, query, note); err != nil {
-// 		if errors.Is(err, sql.ErrNoRows) {
-// 			return domain.ErrNoteNotFound
-// 		}
-// 		return fmt.Errorf("%s: %w", op, err)
-// 	}
-// 	return nil
-// }
+func (r *NoteRepository) UpdateNote(
+	ctx context.Context,
+	noteId string,
+	title string,
+	content string,
+	updateAt time.Time,
+) error {
+	op := "note.repository-UpdateNote"
+	query := `UPDATE notes SET
+							title = $1,
+							content = $2,
+							updated_at = $3
+						WHERE id = $4
+	`
+	if _, err := r.db.ExecContext(ctx, query, title, content, updateAt, noteId); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.ErrNoteNotFound
+		}
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	return nil
+}
 
 func (r *NoteRepository) DeleteNote(
 	ctx context.Context,

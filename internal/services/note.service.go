@@ -128,37 +128,19 @@ func (s *NoteService) CreateNote(
 }
 
 // Method to update the note
-// Can return domain.ErrUserNotFound or domain.ErrBoardNotFound
-// func (s *NoteService) UpdateNote(
-// 	ctx context.Context,
-// 	userId string,
-// 	note domain.NoteDto,
-// ) error {
-// 	op := "note.service-UpdateNote"
-
-// 	if _, err := s.userStore.GetById(ctx, userId); err != nil {
-// 		return fmt.Errorf("%s: %w", op, err)
-// 	}
-// 	if note.BoardId != nil && *note.BoardId != "" {
-// 		if _, err := s.boardStore.GetBoard(ctx, *note.BoardId); err != nil {
-// 			return fmt.Errorf("%s: %w", op, err)
-// 		}
-// 	}
-
-// 	newNote := domain.Note{
-// 		Id:        note.Id,
-// 		BoardId:   note.BoardId,
-// 		UserId:    userId,
-// 		Title:     note.Title,
-// 		Content:   *note.Content,
-// 		CreatedAt: note.CreatedAt,
-// 		UpdatedAt: time.Now(),
-// 	}
-// 	if err := s.store.UpdateNote(ctx, &newNote); err != nil {
-// 		return fmt.Errorf("%s: %w", op, err)
-// 	}
-// 	return nil
-// }
+// Can return domain.ErrNoteNotFound
+func (s *NoteService) UpdateNote(
+	ctx context.Context,
+	noteId string,
+	title string,
+	content string,
+) error {
+	op := "note.service-UpdateNote"
+	if err := s.store.UpdateNote(ctx, noteId, title, content, time.Now()); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	return nil
+}
 
 // Method to delete the note
 func (s *NoteService) DeleteNote(

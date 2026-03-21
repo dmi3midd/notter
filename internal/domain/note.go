@@ -66,10 +66,13 @@ type NoteRepository interface {
 	) error
 
 	// If necessary, return ErrNoteNotFound
-	// UpdateNote(
-	// 	ctx context.Context,
-	// 	note *Note,
-	// ) error
+	UpdateNote(
+		ctx context.Context,
+		noteId string,
+		title string,
+		content string,
+		updateAt time.Time,
+	) error
 
 	DeleteNote(
 		ctx context.Context,
@@ -101,11 +104,12 @@ type NoteService interface {
 		content string,
 	) error
 
-	// UpdateNote(
-	// 	ctx context.Context,
-	// 	userId string,
-	// 	note NoteDto,
-	// ) error
+	UpdateNote(
+		ctx context.Context,
+		noteId string,
+		title string,
+		content string,
+	) error
 
 	DeleteNote(
 		ctx context.Context,

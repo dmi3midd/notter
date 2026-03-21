@@ -19,7 +19,7 @@ func NewNoteHadnler(noteService domain.NoteService) *NoteHandler {
 	}
 }
 
-type CreateNoteRequest struct {
+type CreateOrUpdateNoteRequest struct {
 	Title   string
 	Content string
 }
@@ -114,7 +114,7 @@ func (h *NoteHandler) GetBoardNotesHandler() http.HandlerFunc {
 
 func (h *NoteHandler) CreateNoteHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var reqBody CreateNoteRequest
+		var reqBody CreateOrUpdateNoteRequest
 		if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
@@ -154,10 +154,35 @@ func (h *NoteHandler) CreateNoteHandler() http.HandlerFunc {
 	}
 }
 
-// func (h *NoteHandler) UpdateNoteHandler() http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 	}
-// }
+func (h *NoteHandler) UpdateNoteHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var reqBody CreateOrUpdateNoteRequest
+		if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		defer r.Body.Close()
+
+		noteId := chi.URLParam(r, "noteId")
+		if noteId == "" {
+			http.Error(w, "Note id is required", http.StatusBadRequest)
+			return
+		}
+
+		ctx := r.Context()
+		if err := h.service.UpdateNote(ctx, noteId, reqBody.Title, reqBody.Content); err != nil {
+			if errors.Is(err, domain.ErrNoteNotFound) {
+				http.Error(w, "Note not found", http.StatusNotFound)
+				return
+			}
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+	}
+}
 
 func (h *NoteHandler) DeleteNoteHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
