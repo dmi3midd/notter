@@ -7,6 +7,7 @@ import (
 
 	"github.com/dmi3midd/notter/internal/config"
 	"github.com/dmi3midd/notter/internal/handlers"
+	"github.com/dmi3midd/notter/internal/middlewares"
 	"github.com/dmi3midd/notter/internal/repositories"
 	"github.com/dmi3midd/notter/internal/routers"
 	"github.com/dmi3midd/notter/internal/services"
@@ -42,15 +43,37 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) setupRoutes() *chi.Mux {
-	mainRouter := chi.NewRouter()
-
+	// repositories
 	tokenRepo := repositories.NewTokenRepo(s.db)
-	tokenService := services.NewTokenService(s.cfg.JWT, tokenRepo)
-
 	userRepo := repositories.NewUserRepo(s.db)
+	noteRepo := repositories.NewNoteRepo(s.db)
+	boardRepo := repositories.NewBoardRepo(s.db)
+
+	// services
+	tokenService := services.NewTokenService(s.cfg.JWT, tokenRepo)
 	userService := services.NewUserService(userRepo, tokenService)
+	noteService := services.NewNoteService(noteRepo, userRepo, boardRepo)
+	boardService := services.NewBoardRepo(boardRepo, userRepo)
+
+	// handlers
 	userHandler := handlers.NewUserHandler(userService)
+	noteHandler := handlers.NewNoteHadnler(noteService)
+	boardHandler := handlers.NewBoardHandler(boardService)
+
+	// routers
+	mainRouter := chi.NewRouter()
 	userRouter := routers.NewUserRouter(userHandler)
-	mainRouter.Mount("/users", userRouter)
+	noteRouter := routers.NewNoteRouter(noteHandler)
+	boardRouter := routers.NewBoardRouter(boardHandler)
+
+	// routers setup
+	mainRouter.Mount("/api/users", userRouter)
+	mainRouter.Group(func(router chi.Router) {
+		router.Use(middlewares.Authorization(tokenService, userRepo))
+
+		router.Mount("/api/notes", noteRouter)
+		router.Mount("/api/boards", boardRouter)
+	})
+
 	return mainRouter
 }

@@ -88,7 +88,7 @@ type NoteService interface {
 
 	GetNotesByBoardId(
 		ctx context.Context,
-		boardId string,
+		boardId *string,
 	) ([]NoteDto, error)
 
 	GetStandaloneNotes(
@@ -98,7 +98,7 @@ type NoteService interface {
 
 	CreateNote(
 		ctx context.Context,
-		boardId string,
+		boardId *string,
 		userId string,
 		title string,
 		content string,

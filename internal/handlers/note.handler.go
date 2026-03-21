@@ -93,7 +93,7 @@ func (h *NoteHandler) GetBoardNotesHandler() http.HandlerFunc {
 			return
 		}
 		ctx := r.Context()
-		notes, err := h.service.GetNotesByBoardId(ctx, boardId)
+		notes, err := h.service.GetNotesByBoardId(ctx, &boardId)
 		if err != nil {
 			if errors.Is(err, domain.ErrBoardNotFound) {
 				http.Error(w, "Board not found", http.StatusNotFound)
@@ -140,7 +140,7 @@ func (h *NoteHandler) CreateNoteHandler() http.HandlerFunc {
 		}
 
 		if err := h.service.CreateNote(
-			ctx, boardId,
+			ctx, &boardId,
 			user.Id,
 			reqBody.Title,
 			reqBody.Content,
