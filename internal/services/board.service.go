@@ -40,7 +40,7 @@ func (s *BoardService) GetBoards(ctx context.Context, userId string) ([]domain.B
 
 	boardsDto := []domain.BoardDto{}
 	for _, board := range boards {
-		boardsDto = append(boardsDto, *domain.NewBoardDto(&board))
+		boardsDto = append(boardsDto, *domain.ToBoardDto(&board))
 	}
 
 	return boardsDto, nil

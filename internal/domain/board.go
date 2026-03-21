@@ -20,12 +20,12 @@ type Board struct {
 type BoardDto struct {
 	Id        string    `json:"id"`
 	Title     string    `json:"title"`
-	Notes     int       `json:"notes" db:"notes"`
+	Notes     int       `json:"notes"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-func NewBoardDto(board *Board) *BoardDto {
+func ToBoardDto(board *Board) *BoardDto {
 	return &BoardDto{
 		Id:        board.Id,
 		Title:     board.Title,

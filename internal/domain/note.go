@@ -20,22 +20,27 @@ type Note struct {
 
 type NoteDto struct {
 	Id        string    `json:"id"`
-	BoardId   *string   `json:"boardId"`
+	BoardId   *string   `json:"boardId,omitempty"`
 	Title     string    `json:"title"`
-	Content   string    `json:"content"`
+	Content   *string   `json:"content,omitempty"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-func NewNoteDto(note *Note) *NoteDto {
-	return &NoteDto{
+func ToNoteDto(note *Note, includeContent bool) *NoteDto {
+	dto := &NoteDto{
 		Id:        note.Id,
 		BoardId:   note.BoardId,
 		Title:     note.Title,
-		Content:   note.Content,
 		CreatedAt: note.CreatedAt,
 		UpdatedAt: note.UpdatedAt,
 	}
+
+	if includeContent {
+		dto.Content = &note.Content
+	}
+
+	return dto
 }
 
 type NoteRepository interface {

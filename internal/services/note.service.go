@@ -36,7 +36,7 @@ func (s *NoteService) GetNote(
 ) (*domain.NoteDto, error) {
 	op := "note.service-GetNote"
 	note, err := s.store.GetNote(ctx, noteId)
-	noteDto := domain.NewNoteDto(note)
+	noteDto := domain.ToNoteDto(note, true)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -63,7 +63,7 @@ func (s *NoteService) GetNotesByBoardId(
 	}
 	notesDto := []domain.NoteDto{}
 	for _, note := range notes {
-		notesDto = append(notesDto, *domain.NewNoteDto(&note))
+		notesDto = append(notesDto, *domain.ToNoteDto(&note, false))
 	}
 	return notesDto, nil
 }
@@ -87,7 +87,7 @@ func (s *NoteService) GetStandaloneNotes(
 
 	notesDto := []domain.NoteDto{}
 	for _, note := range notes {
-		notesDto = append(notesDto, *domain.NewNoteDto(&note))
+		notesDto = append(notesDto, *domain.ToNoteDto(&note, false))
 	}
 	return notesDto, nil
 }
@@ -150,7 +150,7 @@ func (s *NoteService) UpdateNote(
 		BoardId:   note.BoardId,
 		UserId:    userId,
 		Title:     note.Title,
-		Content:   note.Content,
+		Content:   *note.Content,
 		CreatedAt: note.CreatedAt,
 		UpdatedAt: time.Now(),
 	}
