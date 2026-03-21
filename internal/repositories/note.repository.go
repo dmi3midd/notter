@@ -96,26 +96,25 @@ func (r *NoteRepository) CreateNote(
 }
 
 // Can return domain.ErrNoteNotFound
-func (r *NoteRepository) UpdateNote(
-	ctx context.Context,
-	note *domain.Note,
-) error {
-	op := "note.repository-UpdateNote"
-	query := `UPDATE notes SET
-							board_id = :board_id,
-							title = :title,
-							content = :content,
-							updated_at = :updated_at
-						WHERE id = :id
-	`
-	if _, err := r.db.NamedExecContext(ctx, query, note); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return domain.ErrNoteNotFound
-		}
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	return nil
-}
+// func (r *NoteRepository) UpdateNote(
+// 	ctx context.Context,
+// 	note *domain.Note,
+// ) error {
+// 	op := "note.repository-UpdateNote"
+// 	query := `UPDATE notes SET
+// 							title = :title,
+// 							content = :content,
+// 							updated_at = :updated_at
+// 						WHERE id = :id
+// 	`
+// 	if _, err := r.db.NamedExecContext(ctx, query, note); err != nil {
+// 		if errors.Is(err, sql.ErrNoRows) {
+// 			return domain.ErrNoteNotFound
+// 		}
+// 		return fmt.Errorf("%s: %w", op, err)
+// 	}
+// 	return nil
+// }
 
 func (r *NoteRepository) DeleteNote(
 	ctx context.Context,
