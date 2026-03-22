@@ -11,20 +11,20 @@ import (
 )
 
 type UserService struct {
-	store        domain.UserRepository
+	userStore    domain.UserRepository
 	tokenService domain.TokenService
 }
 
-func NewUserService(store domain.UserRepository, tokenService domain.TokenService) *UserService {
+func NewUserService(userStore domain.UserRepository, tokenService domain.TokenService) *UserService {
 	return &UserService{
-		store:        store,
+		userStore:    userStore,
 		tokenService: tokenService,
 	}
 }
 
 func (us *UserService) Registration(ctx context.Context, username, email, password string) (*domain.UserData, error) {
 	op := "user.service-Registration"
-	candidate, err := us.store.GetByEmail(ctx, email)
+	candidate, err := us.userStore.GetByEmail(ctx, email)
 	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -38,7 +38,7 @@ func (us *UserService) Registration(ctx context.Context, username, email, passwo
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-	user, err := us.store.Create(ctx, id, username, email, string(hashedPassword))
+	user, err := us.userStore.Create(ctx, id, username, email, string(hashedPassword))
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -60,7 +60,7 @@ func (us *UserService) Registration(ctx context.Context, username, email, passwo
 
 func (us *UserService) Login(ctx context.Context, email, password string) (*domain.UserData, error) {
 	op := "user.service-Login"
-	user, err := us.store.GetByEmail(ctx, email)
+	user, err := us.userStore.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -108,7 +108,7 @@ func (us *UserService) Refresh(ctx context.Context, refreshToken string) (*domai
 		return nil, fmt.Errorf("%s: %w", op, domain.ErrUnuthorized)
 	}
 
-	user, err := us.store.GetByEmail(ctx, userFromToken.Email)
+	user, err := us.userStore.GetByEmail(ctx, userFromToken.Email)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}

@@ -10,12 +10,12 @@ import (
 )
 
 type NoteHandler struct {
-	service domain.NoteService
+	noteService domain.NoteService
 }
 
 func NewNoteHadnler(noteService domain.NoteService) *NoteHandler {
 	return &NoteHandler{
-		service: noteService,
+		noteService: noteService,
 	}
 }
 
@@ -32,7 +32,7 @@ func (h *NoteHandler) GetNoteHandler() http.HandlerFunc {
 			return
 		}
 		ctx := r.Context()
-		note, err := h.service.GetNote(ctx, noteId)
+		note, err := h.noteService.GetNote(ctx, noteId)
 		if err != nil {
 			if errors.Is(err, domain.ErrNoteNotFound) {
 				http.Error(w, "Note note found", http.StatusNotFound)
@@ -66,7 +66,7 @@ func (h *NoteHandler) GetStandaloneNotesHandler() http.HandlerFunc {
 			return
 		}
 
-		notes, err := h.service.GetStandaloneNotes(ctx, user.Id)
+		notes, err := h.noteService.GetStandaloneNotes(ctx, user.Id)
 		if err != nil {
 			if errors.Is(err, domain.ErrUserNotFound) {
 				http.Error(w, "User doesn't exist", http.StatusNotFound)
@@ -93,7 +93,7 @@ func (h *NoteHandler) GetBoardNotesHandler() http.HandlerFunc {
 			return
 		}
 		ctx := r.Context()
-		notes, err := h.service.GetNotesByBoardId(ctx, &boardId)
+		notes, err := h.noteService.GetNotesByBoardId(ctx, &boardId)
 		if err != nil {
 			if errors.Is(err, domain.ErrBoardNotFound) {
 				http.Error(w, "Board not found", http.StatusNotFound)
@@ -139,7 +139,7 @@ func (h *NoteHandler) CreateNoteHandler() http.HandlerFunc {
 			return
 		}
 
-		if err := h.service.CreateNote(
+		if err := h.noteService.CreateNote(
 			ctx, &boardId,
 			user.Id,
 			reqBody.Title,
@@ -170,7 +170,7 @@ func (h *NoteHandler) UpdateNoteHandler() http.HandlerFunc {
 		}
 
 		ctx := r.Context()
-		if err := h.service.UpdateNote(ctx, noteId, reqBody.Title, reqBody.Content); err != nil {
+		if err := h.noteService.UpdateNote(ctx, noteId, reqBody.Title, reqBody.Content); err != nil {
 			if errors.Is(err, domain.ErrNoteNotFound) {
 				http.Error(w, "Note not found", http.StatusNotFound)
 				return
@@ -193,7 +193,7 @@ func (h *NoteHandler) DeleteNoteHandler() http.HandlerFunc {
 		}
 
 		ctx := r.Context()
-		if err := h.service.DeleteNote(ctx, noteId); err != nil {
+		if err := h.noteService.DeleteNote(ctx, noteId); err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}

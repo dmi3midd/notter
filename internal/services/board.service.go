@@ -10,17 +10,17 @@ import (
 )
 
 type BoardService struct {
-	store     domain.BoardRepository
-	userStore domain.UserRepository
+	boardStore domain.BoardRepository
+	userStore  domain.UserRepository
 }
 
 func NewBoardRepo(
-	store domain.BoardRepository,
+	boardStore domain.BoardRepository,
 	userStore domain.UserRepository,
 ) *BoardService {
 	return &BoardService{
-		store:     store,
-		userStore: userStore,
+		boardStore: boardStore,
+		userStore:  userStore,
 	}
 }
 
@@ -33,7 +33,7 @@ func (s *BoardService) GetBoards(ctx context.Context, userId string) ([]domain.B
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	boards, err := s.store.GetBoardsByUserId(ctx, userId)
+	boards, err := s.boardStore.GetBoardsByUserId(ctx, userId)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -67,7 +67,7 @@ func (s *BoardService) CreateBoard(
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	if err := s.store.CreateBoard(ctx, &board); err != nil {
+	if err := s.boardStore.CreateBoard(ctx, &board); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -83,7 +83,7 @@ func (s *BoardService) UpdateBoard(
 ) error {
 	op := "board.service-UpdateBoard"
 
-	boardCandidate, err := s.store.GetBoard(ctx, boardId)
+	boardCandidate, err := s.boardStore.GetBoard(ctx, boardId)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -96,7 +96,7 @@ func (s *BoardService) UpdateBoard(
 		CreatedAt: boardCandidate.CreatedAt,
 		UpdatedAt: time.Now(),
 	}
-	if err := s.store.UpdateBoard(ctx, &board); err != nil {
+	if err := s.boardStore.UpdateBoard(ctx, &board); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -107,7 +107,7 @@ func (s *BoardService) UpdateBoard(
 func (s BoardService) DeleteBoard(ctx context.Context, boardId string) error {
 	op := "board.service-DeleteBoard"
 
-	if err := s.store.DeleteBoard(ctx, boardId); err != nil {
+	if err := s.boardStore.DeleteBoard(ctx, boardId); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 

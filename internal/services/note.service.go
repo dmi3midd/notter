@@ -10,19 +10,19 @@ import (
 )
 
 type NoteService struct {
-	store domain.NoteRepository
+	noteStore domain.NoteRepository
 	// Need to check if board or user exist
 	userStore  domain.UserRepository
 	boardStore domain.BoardRepository
 }
 
 func NewNoteService(
-	store domain.NoteRepository,
+	noteStore domain.NoteRepository,
 	userStore domain.UserRepository,
 	boardStore domain.BoardRepository,
 ) *NoteService {
 	return &NoteService{
-		store:      store,
+		noteStore:  noteStore,
 		userStore:  userStore,
 		boardStore: boardStore,
 	}
@@ -35,7 +35,7 @@ func (s *NoteService) GetNote(
 	noteId string,
 ) (*domain.NoteDto, error) {
 	op := "note.service-GetNote"
-	note, err := s.store.GetNote(ctx, noteId)
+	note, err := s.noteStore.GetNote(ctx, noteId)
 	noteDto := domain.ToNoteDto(note, true)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
@@ -57,7 +57,7 @@ func (s *NoteService) GetNotesByBoardId(
 		}
 	}
 
-	notes, err := s.store.GetNotesByBoardId(ctx, *boardId)
+	notes, err := s.noteStore.GetNotesByBoardId(ctx, *boardId)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -80,7 +80,7 @@ func (s *NoteService) GetStandaloneNotes(
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	notes, err := s.store.GetStandaloneNotes(ctx, userId)
+	notes, err := s.noteStore.GetStandaloneNotes(ctx, userId)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -121,7 +121,7 @@ func (s *NoteService) CreateNote(
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	if err := s.store.CreateNote(ctx, &newNote); err != nil {
+	if err := s.noteStore.CreateNote(ctx, &newNote); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
@@ -136,7 +136,7 @@ func (s *NoteService) UpdateNote(
 	content string,
 ) error {
 	op := "note.service-UpdateNote"
-	if err := s.store.UpdateNote(ctx, noteId, title, content, time.Now()); err != nil {
+	if err := s.noteStore.UpdateNote(ctx, noteId, title, content, time.Now()); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
@@ -148,7 +148,7 @@ func (s *NoteService) DeleteNote(
 	noteId string,
 ) error {
 	op := "note.service-DeleteNote"
-	if err := s.store.DeleteNote(ctx, noteId); err != nil {
+	if err := s.noteStore.DeleteNote(ctx, noteId); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil

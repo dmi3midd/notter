@@ -10,12 +10,12 @@ import (
 )
 
 type BoardHandler struct {
-	service domain.BoardService
+	boardService domain.BoardService
 }
 
 func NewBoardHandler(boardService domain.BoardService) *BoardHandler {
 	return &BoardHandler{
-		service: boardService,
+		boardService: boardService,
 	}
 }
 
@@ -38,7 +38,7 @@ func (h *BoardHandler) GetBoardsHandler() http.HandlerFunc {
 			return
 		}
 
-		boards, err := h.service.GetBoards(ctx, user.Id)
+		boards, err := h.boardService.GetBoards(ctx, user.Id)
 		if err != nil {
 			if errors.Is(err, domain.ErrUserNotFound) {
 				http.Error(w, "User doesn't exist", http.StatusNotFound)
@@ -79,7 +79,7 @@ func (h *BoardHandler) CreateBoardHandler() http.HandlerFunc {
 			return
 		}
 
-		if err := h.service.CreateBoard(ctx, user.Id, reqBody.Title); err != nil {
+		if err := h.boardService.CreateBoard(ctx, user.Id, reqBody.Title); err != nil {
 			if errors.Is(err, domain.ErrUserNotFound) {
 				http.Error(w, "User doesn't exist", http.StatusNotFound)
 				return
@@ -108,7 +108,7 @@ func (h *BoardHandler) UpdateBoard() http.HandlerFunc {
 		}
 
 		ctx := r.Context()
-		if err := h.service.UpdateBoard(ctx, boardId, reqBody.Title); err != nil {
+		if err := h.boardService.UpdateBoard(ctx, boardId, reqBody.Title); err != nil {
 			if errors.Is(err, domain.ErrBoardNotFound) {
 				http.Error(w, "Board not found", http.StatusNotFound)
 				return
@@ -131,7 +131,7 @@ func (h *BoardHandler) DeleteBoard() http.HandlerFunc {
 		}
 
 		ctx := r.Context()
-		if err := h.service.DeleteBoard(ctx, boardId); err != nil {
+		if err := h.boardService.DeleteBoard(ctx, boardId); err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
