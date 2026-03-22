@@ -11,12 +11,12 @@ import (
 )
 
 type TokenRepository struct {
-	store *sqlx.DB
+	db *sqlx.DB
 }
 
-func NewTokenRepo(store *sqlx.DB) *TokenRepository {
+func NewTokenRepo(db *sqlx.DB) *TokenRepository {
 	return &TokenRepository{
-		store: store,
+		db: db,
 	}
 }
 
@@ -24,7 +24,7 @@ func (r *TokenRepository) GetToken(ctx context.Context, refreshToken string) (*d
 	op := "token.repository-GetToken"
 	query := "SELECT * FROM tokens WHERE refresh_token = $1"
 	var token domain.Token
-	err := r.store.GetContext(ctx, &token, query, refreshToken)
+	err := r.db.GetContext(ctx, &token, query, refreshToken)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("%s: %w", op, domain.ErrTokenNotFound)
@@ -39,7 +39,7 @@ func (r *TokenRepository) Create(ctx context.Context, userId, refreshToken strin
 	query := `INSERT INTO tokens (user_id, refresh_token)
 			  VALUES ($1, $2) RETURNING *`
 	var token domain.Token
-	err := r.store.GetContext(ctx, &token, query, userId, refreshToken)
+	err := r.db.GetContext(ctx, &token, query, userId, refreshToken)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -50,7 +50,7 @@ func (r *TokenRepository) Delete(ctx context.Context, refreshToken string) error
 	op := "token.repository-Delete"
 	query := "DELETE FROM tokens WHERE refresh_token = $1 RETURNING *"
 	var token domain.Token
-	err := r.store.GetContext(ctx, &token, query, refreshToken)
+	err := r.db.GetContext(ctx, &token, query, refreshToken)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil
@@ -64,7 +64,7 @@ func (r *TokenRepository) Update(ctx context.Context, userId, refreshToken strin
 	op := "token.repository-Update"
 	query := "UPDATE tokens SET refresh_token = $1 WHERE user_id = $2 RETURNING *"
 	var token domain.Token
-	err := r.store.GetContext(ctx, &token, query, refreshToken, userId)
+	err := r.db.GetContext(ctx, &token, query, refreshToken, userId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("%s: %w", op, domain.ErrTokenNotFound)

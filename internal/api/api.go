@@ -63,6 +63,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 	// routers
 	mainRouter := chi.NewRouter()
 	userRouter := routers.NewUserRouter(userHandler)
+<<<<<<< HEAD
 	noteRouter := routers.NewNoteRouter(noteHandler)
 	boardRouter := routers.NewBoardRouter(boardHandler)
 
@@ -75,5 +76,8 @@ func (s *Server) setupRoutes() *chi.Mux {
 		router.Mount("/api/boards", boardRouter)
 	})
 
+=======
+	mainRouter.Mount("/api/users", userRouter)
+>>>>>>> master
 	return mainRouter
 }

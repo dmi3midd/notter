@@ -28,12 +28,12 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 }
 
-func (ts *TokenService) GenerateTokens(payload domain.UserDto) (*domain.TokenPair, error) {
+func (s *TokenService) GenerateTokens(payload domain.UserDto) (*domain.TokenPair, error) {
 	op := "token.service-GenerateToken"
-	accessSecret := []byte(ts.cfg.JWT_ACCESS_SECRET)
-	refreshSecret := []byte(ts.cfg.JWT_REFRESH_SECRET)
-	accessExpiry := ts.cfg.AccessExpiry
-	refreshExpiry := ts.cfg.RefreshExpiry
+	accessSecret := []byte(s.cfg.JWT_ACCESS_SECRET)
+	refreshSecret := []byte(s.cfg.JWT_REFRESH_SECRET)
+	accessExpiry := s.cfg.AccessExpiry
+	refreshExpiry := s.cfg.RefreshExpiry
 
 	accessClaims := UserClaims{
 		UserDto: payload,
@@ -63,11 +63,11 @@ func (ts *TokenService) GenerateTokens(payload domain.UserDto) (*domain.TokenPai
 	}, nil
 }
 
-func (ts *TokenService) SaveToken(ctx context.Context, userId, refreshToken string) error {
+func (s *TokenService) SaveToken(ctx context.Context, userId, refreshToken string) error {
 	op := "token.service-SaveToken"
-	if err := ts.store.Update(ctx, userId, refreshToken); err != nil {
+	if err := s.store.Update(ctx, userId, refreshToken); err != nil {
 		if errors.Is(err, domain.ErrTokenNotFound) {
-			if err := ts.store.Create(ctx, userId, refreshToken); err != nil {
+			if err := s.store.Create(ctx, userId, refreshToken); err != nil {
 				return fmt.Errorf("%s: %w", op, err)
 			}
 			return nil
@@ -77,9 +77,9 @@ func (ts *TokenService) SaveToken(ctx context.Context, userId, refreshToken stri
 	return nil
 }
 
-func (ts *TokenService) ValidateAccessToken(accessToken string) *domain.UserDto {
+func (s *TokenService) ValidateAccessToken(accessToken string) *domain.UserDto {
 	op := "token.service-validateAccessToken"
-	accessSecret := []byte(ts.cfg.JWT_ACCESS_SECRET)
+	accessSecret := []byte(s.cfg.JWT_ACCESS_SECRET)
 
 	token, err := jwt.ParseWithClaims(accessToken, &UserClaims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -99,9 +99,9 @@ func (ts *TokenService) ValidateAccessToken(accessToken string) *domain.UserDto 
 	return nil
 }
 
-func (ts *TokenService) ValidateRefreshToken(refreshToken string) *domain.UserDto {
+func (s *TokenService) ValidateRefreshToken(refreshToken string) *domain.UserDto {
 	op := "token.service-validateRefreshToken"
-	refreshSecret := []byte(ts.cfg.JWT_REFRESH_SECRET)
+	refreshSecret := []byte(s.cfg.JWT_REFRESH_SECRET)
 
 	token, err := jwt.ParseWithClaims(refreshToken, &UserClaims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -127,18 +127,18 @@ func (ts *TokenService) ValidateRefreshToken(refreshToken string) *domain.UserDt
 	return nil
 }
 
-func (ts *TokenService) RemoveToken(ctx context.Context, refreshToken string) error {
+func (s *TokenService) RemoveToken(ctx context.Context, refreshToken string) error {
 	op := "token.service-RemoveToken"
-	err := ts.store.Delete(ctx, refreshToken)
+	err := s.store.Delete(ctx, refreshToken)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
 }
 
-func (ts *TokenService) FindToken(ctx context.Context, refreshToken string) (*domain.Token, error) {
+func (s *TokenService) FindToken(ctx context.Context, refreshToken string) (*domain.Token, error) {
 	op := "token.service-FindToken"
-	token, err := ts.store.GetToken(ctx, refreshToken)
+	token, err := s.store.GetToken(ctx, refreshToken)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
