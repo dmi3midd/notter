@@ -89,12 +89,12 @@ func (r *BoardRepository) DeleteBoard(
 	defer tx.Rollback()
 
 	queryToDeleteBoard := "DELETE FROM boards WHERE id = $1"
-	if _, err := r.db.ExecContext(ctx, queryToDeleteBoard, boardId); err != nil {
+	if _, err := tx.ExecContext(ctx, queryToDeleteBoard, boardId); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	queryToDelteNotes := "DELETE FROM notes WHERE board_id = $1"
-	if _, err := r.db.ExecContext(ctx, queryToDelteNotes, boardId); err != nil {
+	if _, err := tx.ExecContext(ctx, queryToDelteNotes, boardId); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 

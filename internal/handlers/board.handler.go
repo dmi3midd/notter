@@ -7,20 +7,23 @@ import (
 
 	"github.com/dmi3midd/notter/internal/domain"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 )
 
 type BoardHandler struct {
 	boardService domain.BoardService
+	validate     *validator.Validate
 }
 
 func NewBoardHandler(boardService domain.BoardService) *BoardHandler {
 	return &BoardHandler{
 		boardService: boardService,
+		validate:     validator.New(),
 	}
 }
 
 type CreateOrUpdateBoardRequest struct {
-	Title string
+	Title string `json:"title" validate:"required,min=1,max=36"`
 }
 
 func (h *BoardHandler) GetBoardsHandler() http.HandlerFunc {
@@ -66,6 +69,11 @@ func (h *BoardHandler) CreateBoardHandler() http.HandlerFunc {
 		}
 		defer r.Body.Close()
 
+		if err := h.validate.Struct(reqBody); err != nil {
+			http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		ctx := r.Context()
 		userFromCtx := ctx.Value("user")
 		if userFromCtx == nil {
@@ -98,6 +106,12 @@ func (h *BoardHandler) UpdateBoard() http.HandlerFunc {
 		var reqBody CreateOrUpdateBoardRequest
 		if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		defer r.Body.Close()
+
+		if err := h.validate.Struct(reqBody); err != nil {
+			http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 
