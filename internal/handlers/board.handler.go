@@ -35,7 +35,7 @@ func (h *BoardHandler) GetBoardsHandler() http.HandlerFunc {
 			return
 		}
 
-		user, ok := userFromCtx.(domain.User)
+		user, ok := userFromCtx.(*domain.User)
 		if !ok {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
@@ -81,7 +81,7 @@ func (h *BoardHandler) CreateBoardHandler() http.HandlerFunc {
 			return
 		}
 
-		user, ok := userFromCtx.(domain.User)
+		user, ok := userFromCtx.(*domain.User)
 		if !ok {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return

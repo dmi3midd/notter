@@ -36,10 +36,10 @@ func (s *NoteService) GetNote(
 ) (*domain.NoteDto, error) {
 	op := "note.service-GetNote"
 	note, err := s.noteStore.GetNote(ctx, noteId)
-	noteDto := domain.ToNoteDto(note, true)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
+	noteDto := domain.ToNoteDto(note, true)
 	return noteDto, nil
 }
 
@@ -110,6 +110,8 @@ func (s *NoteService) CreateNote(
 		if _, err := s.boardStore.GetBoard(ctx, *boardId); err != nil {
 			return fmt.Errorf("%s: %w", op, err)
 		}
+	} else {
+		boardId = nil
 	}
 
 	newNote := domain.Note{
@@ -136,6 +138,9 @@ func (s *NoteService) UpdateNote(
 	content string,
 ) error {
 	op := "note.service-UpdateNote"
+	if _, err := s.noteStore.GetNote(ctx, noteId); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
 	if err := s.noteStore.UpdateNote(ctx, noteId, title, content, time.Now()); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}

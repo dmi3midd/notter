@@ -26,7 +26,7 @@ func (r *BoardRepository) GetBoard(
 	boardId string,
 ) (*domain.Board, error) {
 	op := "board.repository-GetBoard"
-	query := "SELEct * FROM boards WHERE board_id = $1"
+	query := "SELECT * FROM boards WHERE id = $1"
 	var board domain.Board
 	if err := r.db.GetContext(ctx, &board, query, boardId); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

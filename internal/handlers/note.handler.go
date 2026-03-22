@@ -3,25 +3,29 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/dmi3midd/notter/internal/domain"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 )
 
 type NoteHandler struct {
 	noteService domain.NoteService
+	validate    *validator.Validate
 }
 
 func NewNoteHadnler(noteService domain.NoteService) *NoteHandler {
 	return &NoteHandler{
 		noteService: noteService,
+		validate:    validator.New(),
 	}
 }
 
 type CreateOrUpdateNoteRequest struct {
-	Title   string
-	Content string
+	Title   string `json:"title" validate:"required,min=1,max=36"`
+	Content string `json:"content"`
 }
 
 func (h *NoteHandler) GetNoteHandler() http.HandlerFunc {
@@ -60,7 +64,7 @@ func (h *NoteHandler) GetStandaloneNotesHandler() http.HandlerFunc {
 			return
 		}
 
-		user, ok := userFromCtx.(domain.User)
+		user, ok := userFromCtx.(*domain.User)
 		if !ok {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
@@ -116,16 +120,19 @@ func (h *NoteHandler) CreateNoteHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var reqBody CreateOrUpdateNoteRequest
 		if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+			log.Println(errors.Unwrap(err))
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 		defer r.Body.Close()
 
-		boardId := chi.URLParam(r, "boardId")
-		if boardId == "" {
-			http.Error(w, "Board id is required", http.StatusBadRequest)
+		if err := h.validate.Struct(reqBody); err != nil {
+			http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		boardId := chi.URLParam(r, "boardId")
+
 		ctx := r.Context()
 		userFromCtx := ctx.Value("user")
 		if userFromCtx == nil {
@@ -133,8 +140,9 @@ func (h *NoteHandler) CreateNoteHandler() http.HandlerFunc {
 			return
 		}
 
-		user, ok := userFromCtx.(domain.User)
+		user, ok := userFromCtx.(*domain.User)
 		if !ok {
+			log.Println(userFromCtx)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -145,6 +153,7 @@ func (h *NoteHandler) CreateNoteHandler() http.HandlerFunc {
 			reqBody.Title,
 			reqBody.Content,
 		); err != nil {
+			log.Println(errors.Unwrap(err))
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -162,6 +171,11 @@ func (h *NoteHandler) UpdateNoteHandler() http.HandlerFunc {
 			return
 		}
 		defer r.Body.Close()
+
+		if err := h.validate.Struct(reqBody); err != nil {
+			http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
+			return
+		}
 
 		noteId := chi.URLParam(r, "noteId")
 		if noteId == "" {

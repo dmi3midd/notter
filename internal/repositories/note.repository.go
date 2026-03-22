@@ -78,16 +78,18 @@ func (r *NoteRepository) CreateNote(
 	defer tx.Rollback()
 
 	queryToCreateNote := `
-	INSERT INTO notes (id, board_id, user_id, title, content, created_at, update_at)
-    VALUES (:id, :board_id, :user_id, :title, :content, :created_at, :update_at)
+	INSERT INTO notes (id, board_id, user_id, title, content, created_at, updated_at)
+    VALUES (:id, :board_id, :user_id, :title, :content, :created_at, :updated_at)
 	`
-	if _, err := r.db.NamedExecContext(ctx, queryToCreateNote, note); err != nil {
+	if _, err := tx.NamedExecContext(ctx, queryToCreateNote, note); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	queryToUpdateBoard := `UPDATE boards SET notes = notes + 1 WHERE id = $1`
-	if _, err := r.db.ExecContext(ctx, queryToUpdateBoard, note.BoardId); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+	if note.BoardId != nil && *note.BoardId != "" {
+		queryToUpdateBoard := `UPDATE boards SET notes = notes + 1 WHERE id = $1`
+		if _, err := tx.ExecContext(ctx, queryToUpdateBoard, *note.BoardId); err != nil {
+			return fmt.Errorf("%s: %w", op, err)
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -96,7 +98,6 @@ func (r *NoteRepository) CreateNote(
 	return nil
 }
 
-// Can return domain.ErrNoteNotFound
 func (r *NoteRepository) UpdateNote(
 	ctx context.Context,
 	noteId string,
@@ -125,7 +126,7 @@ func (r *NoteRepository) DeleteNote(
 	noteId string,
 ) error {
 	op := "note.repository-DeleteNote"
-	query := "DELETE FROM notes WHERE note_id = $1"
+	query := "DELETE FROM notes WHERE id = $1"
 	if _, err := r.db.ExecContext(ctx, query, noteId); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
