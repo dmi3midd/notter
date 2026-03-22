@@ -142,7 +142,6 @@ func (h *NoteHandler) CreateNoteHandler() http.HandlerFunc {
 
 		user, ok := userFromCtx.(*domain.User)
 		if !ok {
-			log.Println(userFromCtx)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -153,7 +152,10 @@ func (h *NoteHandler) CreateNoteHandler() http.HandlerFunc {
 			reqBody.Title,
 			reqBody.Content,
 		); err != nil {
-			log.Println(errors.Unwrap(err))
+			if errors.Is(err, domain.ErrBoardNotFound) {
+				http.Error(w, "Board not found", http.StatusNotFound)
+				return
+			}
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
