@@ -7,25 +7,28 @@ import (
 	"net/http"
 
 	"github.com/dmi3midd/notter/internal/domain"
+	"github.com/go-playground/validator/v10"
 )
 
 type RegistrationRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Username string `json:"username" validate:"required,min=4,max=16"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8,max=32"`
 }
 type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8,max=32"`
 }
 
 type UserHandler struct {
 	userService domain.UserService
+	validate    *validator.Validate
 }
 
 func NewUserHandler(userService domain.UserService) *UserHandler {
 	return &UserHandler{
 		userService: userService,
+		validate:    validator.New(),
 	}
 }
 
@@ -38,6 +41,11 @@ func (h *UserHandler) RegisterUserHandler() http.HandlerFunc {
 		}
 		defer r.Body.Close()
 
+		if err := h.validate.Struct(reqBody); err != nil {
+			http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		ctx := r.Context()
 		userData, err := h.userService.Registration(
 			ctx,
@@ -48,6 +56,10 @@ func (h *UserHandler) RegisterUserHandler() http.HandlerFunc {
 
 		if err != nil {
 			log.Printf("ERROR: %v", errors.Unwrap(err))
+			if errors.Is(err, domain.ErrUserAlreadyExist) {
+				http.Error(w, "User with this email already exist", http.StatusBadRequest)
+				return
+			}
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -79,6 +91,11 @@ func (h *UserHandler) LoginUserHandler() http.HandlerFunc {
 		}
 		defer r.Body.Close()
 
+		if err := h.validate.Struct(reqBody); err != nil {
+			http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		ctx := r.Context()
 		userData, err := h.userService.Login(
 			ctx,
@@ -88,8 +105,11 @@ func (h *UserHandler) LoginUserHandler() http.HandlerFunc {
 
 		if err != nil {
 			if errors.Is(err, domain.ErrUserNotFound) {
-				log.Printf("ERROR: %v", errors.Unwrap(err))
-				http.Error(w, domain.ErrUserNotFound.Error(), http.StatusNotFound)
+				http.Error(w, "User doesn't exist with this email", http.StatusNotFound)
+				return
+			}
+			if errors.Is(err, domain.ErrInvalidPw) {
+				http.Error(w, "Invalid password", http.StatusBadRequest)
 				return
 			}
 			http.Error(w, "Internal server error", http.StatusInternalServerError)

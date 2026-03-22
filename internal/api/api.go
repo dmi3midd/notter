@@ -51,6 +51,6 @@ func (s *Server) setupRoutes() *chi.Mux {
 	userService := services.NewUserService(userRepo, tokenService)
 	userHandler := handlers.NewUserHandler(userService)
 	userRouter := routers.NewUserRouter(userHandler)
-	mainRouter.Mount("/users", userRouter)
+	mainRouter.Mount("/api/users", userRouter)
 	return mainRouter
 }
