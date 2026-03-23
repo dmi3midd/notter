@@ -31,7 +31,7 @@ func (h *BoardHandler) GetBoardsHandler() http.HandlerFunc {
 		ctx := r.Context()
 		userFromCtx := ctx.Value("user")
 		if userFromCtx == nil {
-			http.Error(w, domain.ErrUnuthorized.Error(), http.StatusUnauthorized)
+			http.Error(w, domain.ErrUnauthorized.Error(), http.StatusUnauthorized)
 			return
 		}
 
@@ -77,7 +77,7 @@ func (h *BoardHandler) CreateBoardHandler() http.HandlerFunc {
 		ctx := r.Context()
 		userFromCtx := ctx.Value("user")
 		if userFromCtx == nil {
-			http.Error(w, domain.ErrUnuthorized.Error(), http.StatusUnauthorized)
+			http.Error(w, domain.ErrUnauthorized.Error(), http.StatusUnauthorized)
 			return
 		}
 

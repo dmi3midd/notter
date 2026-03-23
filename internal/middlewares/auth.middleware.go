@@ -24,20 +24,20 @@ func Authorization(
 			}
 
 			if token == "" {
-				http.Error(w, domain.ErrUnuthorized.Error(), http.StatusUnauthorized)
+				http.Error(w, domain.ErrUnauthorized.Error(), http.StatusUnauthorized)
 				return
 			}
 
 			payload := tokenService.ValidateAccessToken(token)
 			if payload == nil {
-				http.Error(w, domain.ErrUnuthorized.Error(), http.StatusUnauthorized)
+				http.Error(w, domain.ErrUnauthorized.Error(), http.StatusUnauthorized)
 				return
 			}
 
 			user, err := userRepository.GetById(r.Context(), payload.Id)
 			if err != nil {
 				if errors.Is(err, domain.ErrUserNotFound) {
-					http.Error(w, domain.ErrUnuthorized.Error(), http.StatusUnauthorized)
+					http.Error(w, domain.ErrUnauthorized.Error(), http.StatusUnauthorized)
 					return
 				}
 			}

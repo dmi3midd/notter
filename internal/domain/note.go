@@ -44,75 +44,44 @@ func ToNoteDto(note *Note, includeContent bool) *NoteDto {
 }
 
 type NoteRepository interface {
-	// If necessary, return ErrNoteNotFound
-	GetNote(
-		ctx context.Context,
-		noteId string,
-	) (*Note, error)
-
-	GetNotesByBoardId(
-		ctx context.Context,
-		boardId string,
-	) ([]Note, error)
-
-	GetStandaloneNotes(
-		ctx context.Context,
-		userId string,
-	) ([]Note, error)
-
-	CreateNote(
-		ctx context.Context,
-		note *Note,
-	) error
-
-	// If necessary, return ErrNoteNotFound
-	UpdateNote(
-		ctx context.Context,
-		noteId string,
-		title string,
-		content string,
-		updateAt time.Time,
-	) error
-
-	DeleteNote(
-		ctx context.Context,
-		noteId string,
-	) error
+	// GetNote retrieves a Note entity by its id.
+	// It returns ErrNoteNotFound if no note are found.
+	GetNote(ctx context.Context, noteId string) (*Note, error)
+	// GetNotesByBoardId retrieves a Note slice by board id.
+	// It returns an empty slice if no notes are found.
+	GetNotesByBoardId(ctx context.Context, boardId string) ([]Note, error)
+	// GetStandaloneNotes retrieves a standalone Note slice by userId.
+	// It returns an empty slice if no notes are found.
+	GetStandaloneNotes(ctx context.Context, userId string) ([]Note, error)
+	// CreateNote inserts a new note and increments the note count on the associated board.
+	// It returns domain.ErrBoardNotFound if the specified board does not exist.
+	CreateNote(ctx context.Context, note *Note) error
+	// UpdateNote modifies the title and content of an existing note.
+	// It returns domain.ErrNoteNotFound if no note is found.
+	UpdateNote(ctx context.Context, noteId string, title string, content string, updateAt time.Time) error
+	// DeleteNote removes the note.
+	DeleteNote(ctx context.Context, noteId string) error
 }
 
 type NoteService interface {
-	GetNote(
-		ctx context.Context,
-		noteId string,
-	) (*NoteDto, error)
-
-	GetNotesByBoardId(
-		ctx context.Context,
-		boardId *string,
-	) ([]NoteDto, error)
-
-	GetStandaloneNotes(
-		ctx context.Context,
-		userId string,
-	) ([]NoteDto, error)
-
-	CreateNote(
-		ctx context.Context,
-		boardId *string,
-		userId string,
-		title string,
-		content string,
-	) error
-
-	UpdateNote(
-		ctx context.Context,
-		noteId string,
-		title string,
-		content string,
-	) error
-
-	DeleteNote(
-		ctx context.Context,
-		noteId string,
-	) error
+	// GetNote finds note and returns NoteDto struct.
+	// It returns ErrNoteNotFound if no note are found.
+	GetNote(ctx context.Context, noteId string) (*NoteDto, error)
+	// GetNotesByBoardId finds a notes by board id and returns NoteDto slice.
+	// It returns an empty slice if no notes are found.
+	// It returns ErrBoardNotFound if no board are found.
+	GetNotesByBoardId(ctx context.Context, boardId *string) ([]NoteDto, error)
+	// GetStandaloneNotes finds a notes by user id and returns NoteDto slice.
+	// It returns ErrUserNotFound if no user are found.
+	// It returns an empty slice if no notes are found.
+	GetStandaloneNotes(ctx context.Context, userId string) ([]NoteDto, error)
+	// CreateNote creates a new note.
+	// It returns ErrUserNotFound if no user are found.
+	// It returns domain.ErrBoardNotFound if the specified board does not exist.
+	CreateNote(ctx context.Context, boardId *string, userId string, title string, content string) error
+	// UpdateNote modifies the existing note.
+	// It returns domain.ErrNoteNotFound if no note is found.
+	UpdateNote(ctx context.Context, noteId string, title string, content string) error
+	// DeleteNote removes the note.
+	DeleteNote(ctx context.Context, noteId string) error
 }

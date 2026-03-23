@@ -100,21 +100,21 @@ func (us *UserService) Refresh(ctx context.Context, refreshToken string) (*domai
 	_, err := us.tokenService.FindToken(ctx, refreshToken)
 	if err != nil {
 		if errors.Is(err, domain.ErrTokenNotFound) {
-			return nil, fmt.Errorf("%s: %w", op, domain.ErrUnuthorized)
+			return nil, fmt.Errorf("%s: %w", op, domain.ErrUnauthorized)
 		}
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	if userFromToken == nil {
-		return nil, fmt.Errorf("%s: %w", op, domain.ErrUnuthorized)
+		return nil, fmt.Errorf("%s: %w", op, domain.ErrUnauthorized)
 	}
 
 	user, err := us.userStore.GetByEmail(ctx, userFromToken.Email)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-	if user == nil {
-		return nil, errors.New("user not found")
-	}
+	// if user == nil {
+	// 	return nil, errors.New("user not found")
+	// }
 	userDto := domain.NewUserDto(user)
 	tokens, err := us.tokenService.GenerateTokens(*userDto)
 	if err != nil {

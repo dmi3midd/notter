@@ -36,54 +36,33 @@ func ToBoardDto(board *Board) *BoardDto {
 }
 
 type BoardRepository interface {
-	// If necessary, return ErrBoardNotFound
-	GetBoard(
-		ctx context.Context,
-		boardId string,
-	) (*Board, error)
-
-	GetBoardsByUserId(
-		ctx context.Context,
-		userId string,
-	) ([]Board, error)
-
-	CreateBoard(
-		ctx context.Context,
-		board *Board,
-	) error
-
-	// If necessary, return ErrBoardNotFound
-	UpdateBoard(
-		ctx context.Context,
-		board *Board,
-	) error
-
-	DeleteBoard(
-		ctx context.Context,
-		boardId string,
-	) error
+	// GetBoard retrieves a single board by its id.
+	// It returns domain.ErrBoardNotFound if no board are found.
+	GetBoard(ctx context.Context, boardId string) (*Board, error)
+	// GetBoardsByUserId retieves a user's boards.
+	// It returns an empty slice if no boards are found.
+	GetBoardsByUserId(ctx context.Context, userId string) ([]Board, error)
+	// CreateBoard inserts a new board.
+	CreateBoard(ctx context.Context, board *Board) error
+	// UpdateBoard updates the existing board.
+	// It returns domain.ErrBoardNotFound if no board are found.
+	UpdateBoard(ctx context.Context, board *Board) error
+	// DeleteBoard removes a board and all its associated notes in a single transaction.
+	// It returns domain.ErrBoardNotFound if no board are found.
+	DeleteBoard(ctx context.Context, boardId string) error
 }
 
 type BoardService interface {
-	GetBoards(
-		ctx context.Context,
-		userId string,
-	) ([]BoardDto, error)
-
-	CreateBoard(
-		ctx context.Context,
-		userId string,
-		title string,
-	) error
-
-	UpdateBoard(
-		ctx context.Context,
-		boardId string,
-		title string,
-	) error
-
-	DeleteBoard(
-		ctx context.Context,
-		boardId string,
-	) error
+	// GetBoards finds a user's boards.
+	// It returns ErrUserNotFound if no user are found.
+	// It returns an empty slice if no boards are found.
+	GetBoards(ctx context.Context, userId string) ([]BoardDto, error)
+	// CreateBoard creates a new board.
+	// It returns ErrUserNotFound if no user are found.
+	CreateBoard(ctx context.Context, userId string, title string) error
+	// UpdateBoard modifies the existing board.
+	// It returns domain.ErrBoardNotFound if no board are found.
+	UpdateBoard(ctx context.Context, boardId string, title string) error
+	// DeleteBoard removes the board.
+	DeleteBoard(ctx context.Context, boardId string) error
 }

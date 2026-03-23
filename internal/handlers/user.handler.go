@@ -138,7 +138,7 @@ func (h *UserHandler) LogoutUserHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("refreshToken")
 		if err != nil {
-			http.Error(w, domain.ErrUnuthorized.Error(), http.StatusUnauthorized)
+			http.Error(w, domain.ErrUnauthorized.Error(), http.StatusUnauthorized)
 			return
 		}
 		refreshToken := cookie.Value
@@ -167,7 +167,7 @@ func (h *UserHandler) RefreshTokenHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("refreshToken")
 		if err != nil {
-			http.Error(w, domain.ErrUnuthorized.Error(), http.StatusUnauthorized)
+			http.Error(w, domain.ErrUnauthorized.Error(), http.StatusUnauthorized)
 			return
 		}
 		refreshToken := cookie.Value
@@ -175,8 +175,8 @@ func (h *UserHandler) RefreshTokenHandler() http.HandlerFunc {
 		userData, err := h.userService.Refresh(ctx, refreshToken)
 		if err != nil {
 			log.Printf("ERROR: %v", errors.Unwrap(err))
-			if errors.Is(err, domain.ErrUnuthorized) {
-				http.Error(w, domain.ErrUnuthorized.Error(), http.StatusUnauthorized)
+			if errors.Is(err, domain.ErrUnauthorized) {
+				http.Error(w, domain.ErrUnauthorized.Error(), http.StatusUnauthorized)
 				return
 			}
 			http.Error(w, "Internal server error", http.StatusInternalServerError)

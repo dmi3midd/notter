@@ -28,8 +28,6 @@ func NewNoteService(
 	}
 }
 
-// Method to get the note by it id
-// Can return domain.ErrNoteNotFound
 func (s *NoteService) GetNote(
 	ctx context.Context,
 	noteId string,
@@ -43,8 +41,6 @@ func (s *NoteService) GetNote(
 	return noteDto, nil
 }
 
-// Method to get notes by board id
-// Can return domain.ErrBoardNotFound
 func (s *NoteService) GetNotesByBoardId(
 	ctx context.Context,
 	boardId *string,
@@ -68,8 +64,6 @@ func (s *NoteService) GetNotesByBoardId(
 	return notesDto, nil
 }
 
-// Method to get standalone notes by user id
-// Can return domain.ErrUserNotFound
 func (s *NoteService) GetStandaloneNotes(
 	ctx context.Context,
 	userId string,
@@ -129,8 +123,6 @@ func (s *NoteService) CreateNote(
 	return nil
 }
 
-// Method to update the note
-// Can return domain.ErrNoteNotFound
 func (s *NoteService) UpdateNote(
 	ctx context.Context,
 	noteId string,
@@ -138,9 +130,6 @@ func (s *NoteService) UpdateNote(
 	content string,
 ) error {
 	op := "note.service-UpdateNote"
-	if _, err := s.noteStore.GetNote(ctx, noteId); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
 	if err := s.noteStore.UpdateNote(ctx, noteId, title, content, time.Now()); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}

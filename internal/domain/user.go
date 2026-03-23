@@ -8,7 +8,7 @@ import (
 
 var ErrUserNotFound error = errors.New("user not found")
 var ErrUserAlreadyExist error = errors.New("user already exist")
-var ErrUnuthorized error = errors.New("user unauthorized")
+var ErrUnauthorized error = errors.New("user unauthorized")
 var ErrInvalidPw error = errors.New("invalid password")
 
 type User struct {
@@ -41,14 +41,27 @@ func NewUserDto(user *User) *UserDto {
 }
 
 type UserRepository interface {
+	// GetById retrieves a User entity by its id.
+	// It returns ErrUserNotFound if no user are found.
 	GetById(ctx context.Context, id string) (*User, error)
+	// GetByEmail retrieves a User entity by its email.
+	// It returns ErrUserNotFound if no user are found.
 	GetByEmail(ctx context.Context, email string) (*User, error)
+	// Create creates a User entity and returns it.
 	Create(ctx context.Context, id, username, email, hashedPassword string) (*User, error)
 }
 
 type UserService interface {
+	// Registration performs user registration and returns UserData struct.
+	// It returns ErrUserAlreadyExist if the user exist.
 	Registration(ctx context.Context, username, email, password string) (*UserData, error)
+	// Login performs user login and returns UserData struct.
+	// It returns ErrUserNotFound if no user are found.
+	// It returns ErrInvalidPw if the password is invalid.
 	Login(ctx context.Context, email, password string) (*UserData, error)
+	// Logout performs logout user.
 	Logout(ctx context.Context, refreshToken string) error
+	// Refresh performs refresh access and refresh tokens and returns UserData struct.
+	// It returns ErrUnuthorized if no refresh token are found or ValidateRefreshToken returned nil
 	Refresh(ctx context.Context, refreshToken string) (*UserData, error)
 }

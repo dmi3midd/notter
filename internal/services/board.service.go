@@ -24,8 +24,6 @@ func NewBoardRepo(
 	}
 }
 
-// Method to get boards by user id
-// Can return domain.ErrUserNotFound
 func (s *BoardService) GetBoards(ctx context.Context, userId string) ([]domain.BoardDto, error) {
 	op := "board.service-GetBoards"
 
@@ -46,8 +44,6 @@ func (s *BoardService) GetBoards(ctx context.Context, userId string) ([]domain.B
 	return boardsDto, nil
 }
 
-// Method to create board
-// Can return domain.ErrUserNotFound
 func (s *BoardService) CreateBoard(
 	ctx context.Context,
 	userId string,
@@ -74,8 +70,6 @@ func (s *BoardService) CreateBoard(
 	return nil
 }
 
-// Method to update board
-// Can return domain.ErrBoardNotFound
 func (s *BoardService) UpdateBoard(
 	ctx context.Context,
 	boardId string,
@@ -103,7 +97,6 @@ func (s *BoardService) UpdateBoard(
 	return nil
 }
 
-// Method to delete board
 func (s BoardService) DeleteBoard(ctx context.Context, boardId string) error {
 	op := "board.service-DeleteBoard"
 
