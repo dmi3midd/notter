@@ -66,10 +66,13 @@ func (s *Server) setupRoutes() *chi.Mux {
 	noteRouter := routers.NewNoteRouter(noteHandler)
 	boardRouter := routers.NewBoardRouter(boardHandler)
 
+	// middlewares
+	authMiddleware := middlewares.NewAuthMiddleware(tokenService, userRepo)
+
 	// routers setup
 	mainRouter.Mount("/api/users", userRouter)
 	mainRouter.Group(func(router chi.Router) {
-		router.Use(middlewares.Authorization(tokenService, userRepo))
+		router.Use(authMiddleware.Authorization)
 
 		router.Mount("/api/notes", noteRouter)
 		router.Mount("/api/boards", boardRouter)
