@@ -30,8 +30,8 @@ type UserClaims struct {
 
 func (s *TokenService) GenerateTokens(payload domain.UserDto) (*domain.TokenPair, error) {
 	op := "token.service-GenerateToken"
-	accessSecret := []byte(s.cfg.JWT_ACCESS_SECRET)
-	refreshSecret := []byte(s.cfg.JWT_REFRESH_SECRET)
+	accessSecret := []byte(s.cfg.AccessSecret)
+	refreshSecret := []byte(s.cfg.RefreshSecret)
 	accessExpiry := s.cfg.AccessExpiry
 	refreshExpiry := s.cfg.RefreshExpiry
 
@@ -79,7 +79,7 @@ func (s *TokenService) SaveToken(ctx context.Context, userId, refreshToken strin
 
 func (s *TokenService) ValidateAccessToken(accessToken string) *domain.UserDto {
 	op := "token.service-validateAccessToken"
-	accessSecret := []byte(s.cfg.JWT_ACCESS_SECRET)
+	accessSecret := []byte(s.cfg.AccessSecret)
 
 	token, err := jwt.ParseWithClaims(accessToken, &UserClaims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -101,7 +101,7 @@ func (s *TokenService) ValidateAccessToken(accessToken string) *domain.UserDto {
 
 func (s *TokenService) ValidateRefreshToken(refreshToken string) *domain.UserDto {
 	op := "token.service-validateRefreshToken"
-	refreshSecret := []byte(s.cfg.JWT_REFRESH_SECRET)
+	refreshSecret := []byte(s.cfg.RefreshSecret)
 
 	token, err := jwt.ParseWithClaims(refreshToken, &UserClaims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

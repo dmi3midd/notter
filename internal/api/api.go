@@ -21,11 +21,10 @@ type Server struct {
 	logger *slog.Logger
 }
 
-func NewServer(cfg *config.Config, db *sqlx.DB, logger *slog.Logger) *Server {
+func NewServer(cfg *config.Config, db *sqlx.DB) *Server {
 	return &Server{
-		cfg:    cfg,
-		db:     db,
-		logger: logger,
+		cfg: cfg,
+		db:  db,
 	}
 }
 

@@ -8,7 +8,7 @@ import (
 )
 
 type Config struct {
-	DB         DBConfig         `yaml:"dbConfig"`
+	DB         DBConfig         `yaml:"db"`
 	HttpServer HttpServerConfig `yaml:"httpServer"`
 	JWT        JWTConfig        `yaml:"jwt"`
 }
