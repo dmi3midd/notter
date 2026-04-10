@@ -67,32 +67,11 @@ func (r *NoteRepository) GetStandaloneNotes(
 func (r *NoteRepository) CreateNote(ctx context.Context, note *domain.Note) error {
 	const op = "note.repository-CreateNote"
 
-	tx, err := r.db.BeginTxx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	defer tx.Rollback()
-
 	queryToCreateNote := `
     INSERT INTO notes (id, board_id, user_id, title, content, created_at, updated_at)
     VALUES (:id, :board_id, :user_id, :title, :content, :created_at, :updated_at)`
-	if _, err := tx.NamedExecContext(ctx, queryToCreateNote, note); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
 
-	if note.BoardId != nil && *note.BoardId != "" {
-		queryToUpdateBoard := `UPDATE boards SET notes = notes + 1 WHERE id = $1`
-		res, err := tx.ExecContext(ctx, queryToUpdateBoard, *note.BoardId)
-		if err != nil {
-			return fmt.Errorf("%s: %w", op, err)
-		}
-		count, _ := res.RowsAffected()
-		if count == 0 {
-			return fmt.Errorf("%s: %w", op, domain.ErrBoardNotFound)
-		}
-	}
-
-	if err := tx.Commit(); err != nil {
+	if _, err := r.db.NamedExecContext(ctx, queryToCreateNote, note); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 

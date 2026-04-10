@@ -8,6 +8,9 @@ CREATE TABLE boards (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+-- +goose StatementEnd
+
+-- +goose StatementBegin
 CREATE TABLE notes (
     id VARCHAR(36) PRIMARY KEY,
     board_id VARCHAR(36),
@@ -19,7 +22,10 @@ CREATE TABLE notes (
     FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE SET NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+-- +goose StatementEnd
 
 -- +goose Down
+-- +goose StatementBegin
 DROP TABLE notes;
 DROP TABLE boards;
+-- +goose StatementEnd

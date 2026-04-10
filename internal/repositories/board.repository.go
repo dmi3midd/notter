@@ -86,32 +86,18 @@ func (r *BoardRepository) DeleteBoard(
 ) error {
 	const op = "board.repository-DeleteBoard"
 
-	tx, err := r.db.BeginTxx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	defer tx.Rollback()
-
 	queryToDeleteBoard := "DELETE FROM boards WHERE id = $1"
-	res, err := tx.ExecContext(ctx, queryToDeleteBoard, boardId)
+	res, err := r.db.ExecContext(ctx, queryToDeleteBoard, boardId)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
+
 	rows, err := res.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	if rows == 0 {
 		return fmt.Errorf("%s: %w", op, domain.ErrBoardNotFound)
-	}
-
-	queryToDeleteNotes := "DELETE FROM notes WHERE board_id = $1"
-	if _, err := tx.ExecContext(ctx, queryToDeleteNotes, boardId); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	return nil
